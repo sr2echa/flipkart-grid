@@ -1,11 +1,37 @@
+# requirements.txt
+
+# Web Requests
+requests
+
+# Core ML & Data Science
 pandas
-numpy
+numpy==1.24.3
 scikit-learn
 xgboost
+torch
+transformers
 sentence-transformers
 faiss-cpu
-transformers
-torch
+
+# NLP Libraries
+spacy==3.6.1
+# Run after installation: python -m spacy download en_core_web_sm
+
+# API & Web Server
+fastapi
+uvicorn[standard]
+
+# Utilities & Visualization
 matplotlib
 seaborn
-tqdm 
+tqdm
+
+# Additional dependencies for compatibility
+thinc
+catalogue
+pydantic
+typing-extensions
+
+# Development tools (optional)
+jupyter
+ipykernel
