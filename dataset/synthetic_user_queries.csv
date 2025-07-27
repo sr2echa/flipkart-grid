@@ -1,0 +1,501 @@
+query_id,original_query,corrected_query,frequency,predicted_purchase,timestamp
+1,cheap camera,cheap camera,48,yes,2025-07-03T07:16:53
+2,samsung,samsung,11,yes,2025-06-29T02:42:39
+3,headphones under 10000,headphones under 10000,3,maybe,2025-07-11T06:00:13
+4,shoes under 5000,shoes under 5000,76,yes,2025-07-09T18:53:27
+5,expensive camera,expensive camera,39,maybe,2025-07-08T17:37:50
+6,gaming phone,gaming phone,9,maybe,2025-07-04T16:08:41
+7,samsung galaxy,samsung galaxy,52,maybe,2025-07-02T20:59:12
+8,Fashion shirt,Fashion shirt,9,maybe,2025-07-24T08:58:10
+9,iphone,iphone,97,yes,2025-07-02T02:51:44
+10,apple,apple,77,maybe,2025-07-26T13:32:42
+11,gaming headphones,gaming headphones,58,no,2025-07-18T09:08:45
+12,samsung,samsung,17,maybe,2025-06-29T10:36:03
+13,casual shoes,casual shoes,72,no,2025-06-29T08:17:15
+14,Electronics phone,Electronics phone,65,no,2025-07-02T10:44:03
+15,oled monitor,oled monitor,85,yes,2025-07-08T12:18:11
+16,formal shoes,formal shoes,67,no,2025-07-09T04:38:27
+17,adidas ultraboost,adidas ultraboost,18,maybe,2025-07-22T10:21:10
+18,shoes under 20000,shoes under 20000,78,maybe,2025-07-27T02:58:26
+19,samsung galaxy,samsung galaxy,89,yes,2025-06-29T04:29:16
+20,Electronics phone,Electronics phone,25,yes,2025-07-25T03:28:09
+21,wireless speaker,wireless speaker,78,maybe,2025-07-07T13:14:02
+22,formal shirt,formal shirt,17,maybe,2025-07-24T08:28:27
+23,best shoes,best shoes,34,no,2025-07-18T06:20:50
+24,wireless phone,wireless phone,11,no,2025-07-08T14:24:11
+25,top laptop,top laptop,10,maybe,2025-07-19T16:56:16
+26,wireless watch,wireless watch,48,maybe,2025-07-26T12:06:56
+27,samsung galaxy,samsung galaxy,54,yes,2025-07-11T09:41:13
+28,curved monitor,curved monitor,4,maybe,2025-06-28T05:08:34
+29,running shirt,running shirt,16,maybe,2025-07-05T15:35:16
+30,adidas,adidas,9,no,2025-07-18T09:57:10
+31,nike,nike,43,no,2025-07-14T09:59:31
+32,budget phone,budget phone,2,yes,2025-07-11T09:18:53
+33,top camera,top camera,14,yes,2025-07-05T10:43:05
+34,premium headphones,premium headphones,63,yes,2025-07-08T08:25:48
+35,nike air,nike air,90,maybe,2025-07-14T05:43:56
+36,smart watch,smart watch,13,yes,2025-07-02T20:39:17
+37,premium phone,premium phone,24,no,2025-07-02T09:37:41
+38,adidas ultraboost,adidas ultraboost,62,maybe,2025-07-16T08:13:07
+39,premium laptop,premium laptop,88,maybe,2025-07-02T14:15:14
+40,budget laptop,budget laptop,49,maybe,2025-07-15T07:48:45
+41,bluetooth watch,bluetooth watch,82,no,2025-07-14T14:18:31
+42,sports dress,sports dress,59,yes,2025-07-27T04:57:47
+43,shoes under 50000,shoes under 50000,65,no,2025-07-10T17:45:37
+44,portable watch,portable watch,92,yes,2025-06-30T00:11:41
+45,bluetooth earbuds,bluetooth earbuds,53,no,2025-07-20T04:50:24
+46,samsung,samsung,10,maybe,2025-07-23T22:19:20
+47,running shoes,running shoes,74,yes,2025-07-03T23:00:15
+48,nike,nike,71,no,2025-07-16T06:35:45
+49,Fashion laptop,Fashion laptop,62,no,2025-07-01T17:22:48
+50,iphone,iphone,52,yes,2025-07-24T16:44:43
+51,running dress,running dress,55,maybe,2025-07-12T03:08:55
+52,nike air,nike air,32,maybe,2025-07-15T10:54:24
+53,iphone,iphone,78,no,2025-07-25T22:14:07
+54,budget laptop,budget laptop,10,no,2025-07-07T05:36:13
+55,premium laptop,premium laptop,55,no,2025-07-01T06:36:32
+56,top shoes,top shoes,15,no,2025-06-30T02:57:38
+57,running shirt,running shirt,39,no,2025-07-08T23:05:31
+58,smart speaker,smart speaker,1,maybe,2025-07-11T22:43:58
+59,top shoes,top shoes,83,maybe,2025-07-01T18:32:08
+60,Fashion shirt,Fashion shirt,8,no,2025-07-09T04:47:32
+61,Home shirt,Home shirt,43,no,2025-07-02T19:14:47
+62,4k tv,4k tv,45,maybe,2025-07-16T08:27:01
+63,wireless phone,wireless phone,2,yes,2025-07-11T09:26:02
+64,expensive laptop,expensive laptop,11,maybe,2025-07-19T21:49:57
+65,samsung galaxy,samsung galaxy,53,yes,2025-07-15T14:37:54
+66,mobile under 10000,mobile under 10000,99,maybe,2025-07-05T19:04:37
+67,wireless earbuds,wireless earbuds,51,no,2025-07-15T20:51:48
+68,smart earbuds,smart earbuds,24,maybe,2025-07-15T03:29:30
+69,bluetooth earbuds,bluetooth earbuds,85,no,2025-07-08T01:39:53
+70,budget phone,budget phone,96,no,2025-07-10T20:37:23
+71,Fashion laptop,Fashion laptop,15,yes,2025-07-01T08:45:40
+72,bluetooth speaker,bluetooth speaker,51,no,2025-07-27T11:15:37
+73,4k tv,4k tv,86,yes,2025-07-06T04:57:44
+74,shoes under 5000,shoes under 5000,54,no,2025-07-23T19:53:22
+75,adidas ultraboost,adidas ultraboost,88,maybe,2025-07-09T18:47:48
+76,premium phone,premium phone,65,maybe,2025-07-05T19:56:56
+77,top phone,top phone,14,yes,2025-07-20T08:08:36
+78,budget phone,budget phone,65,yes,2025-07-16T07:40:08
+79,running dress,running dress,44,no,2025-07-11T00:05:00
+80,Fashion shirt,Fashion shirt,38,no,2025-07-24T22:27:53
+81,mobile under 50000,mobile under 50000,32,maybe,2025-07-08T13:26:29
+82,budget laptop,budget laptop,36,yes,2025-07-13T15:23:17
+83,wireless watch,wireless watch,55,yes,2025-06-30T14:44:37
+84,mobile under 10000,mobile under 10000,25,maybe,2025-07-09T00:25:54
+85,budget laptop,budget laptop,17,no,2025-06-29T10:58:15
+86,Fashion laptop,Fashion laptop,19,no,2025-07-13T05:06:02
+87,Home laptop,Home laptop,12,yes,2025-07-17T08:57:44
+88,expensive shoes,expensive shoes,90,maybe,2025-07-10T21:30:43
+89,casual shirt,casual shirt,55,no,2025-07-01T02:41:12
+90,Home shirt,Home shirt,83,yes,2025-07-08T03:23:03
+91,bluetooth earbuds,bluetooth earbuds,47,no,2025-07-25T10:23:02
+92,curved tv,curved tv,41,yes,2025-07-13T04:11:51
+93,gaming laptop,gaming laptop,7,maybe,2025-07-08T05:17:57
+94,oled monitor,oled monitor,61,no,2025-07-22T03:13:04
+95,adidas,adidas,24,no,2025-07-17T02:30:57
+96,shoes under 20000,shoes under 20000,39,yes,2025-07-20T04:10:21
+97,samsung,samsung,88,maybe,2025-07-04T20:01:43
+98,premium phone,premium phone,95,no,2025-07-10T18:10:44
+99,nike air,nike air,31,maybe,2025-07-04T16:15:09
+100,wireless watch,wireless watch,50,yes,2025-07-09T20:54:47
+101,apple,apple,81,maybe,2025-07-25T03:36:45
+102,samsung,samsung,76,maybe,2025-07-24T01:31:31
+103,casual dress,casual dress,58,yes,2025-07-10T15:41:15
+104,nike,nike,39,maybe,2025-07-26T06:39:48
+105,laptop under 10000,laptop under 10000,6,yes,2025-07-18T16:43:58
+106,sports dress,sports dress,92,no,2025-07-26T05:26:11
+107,nike air,nike air,47,no,2025-07-17T06:54:24
+108,adidas,adidas,9,no,2025-07-15T11:19:40
+109,best laptop,best laptop,77,no,2025-07-08T13:05:54
+110,premium laptop,premium laptop,73,yes,2025-07-04T14:44:22
+111,sports shirt,sports shirt,88,maybe,2025-07-22T15:12:45
+112,iphone,iphone,22,no,2025-07-21T20:33:32
+113,adidas ultraboost,adidas ultraboost,72,no,2025-07-02T07:29:18
+114,cheap laptop,cheap laptop,24,yes,2025-06-30T04:27:57
+115,budget headphones,budget headphones,90,yes,2025-07-03T05:19:18
+116,adidas ultraboost,adidas ultraboost,65,maybe,2025-07-05T07:38:39
+117,nike air,nike air,39,yes,2025-07-05T15:57:50
+118,smart watch,smart watch,16,yes,2025-07-18T09:25:24
+119,running dress,running dress,31,no,2025-07-26T20:26:17
+120,Home laptop,Home laptop,36,yes,2025-06-30T23:35:11
+121,bluetooth watch,bluetooth watch,32,yes,2025-07-16T13:51:28
+122,iphone,iphone,1,maybe,2025-07-16T10:11:24
+123,smart monitor,smart monitor,11,maybe,2025-07-26T19:49:54
+124,nike air,nike air,93,yes,2025-07-20T14:53:20
+125,cheap shoes,cheap shoes,8,maybe,2025-07-23T14:02:03
+126,Fashion laptop,Fashion laptop,94,no,2025-07-10T02:29:24
+127,premium laptop,premium laptop,69,maybe,2025-07-24T18:07:34
+128,adidas,adidas,84,no,2025-06-28T10:56:51
+129,samsung galaxy,samsung galaxy,57,yes,2025-07-03T11:02:01
+130,smart tv,smart tv,75,maybe,2025-07-23T23:11:13
+131,top camera,top camera,30,maybe,2025-07-10T20:26:42
+132,cheap laptop,cheap laptop,62,yes,2025-07-14T09:54:16
+133,laptop under 50000,laptop under 50000,24,yes,2025-07-03T07:32:20
+134,sports dress,sports dress,24,maybe,2025-07-12T03:31:25
+135,bluetooth earbuds,bluetooth earbuds,21,yes,2025-07-19T00:06:34
+136,top phone,top phone,19,yes,2025-07-05T13:50:18
+137,top camera,top camera,83,no,2025-07-19T22:11:52
+138,apple,apple,94,yes,2025-06-28T01:21:08
+139,adidas,adidas,50,yes,2025-07-10T16:26:30
+140,samsung,samsung,98,maybe,2025-07-22T04:47:47
+141,Electronics laptop,Electronics laptop,99,yes,2025-07-06T13:42:57
+142,wireless watch,wireless watch,77,yes,2025-07-22T13:03:48
+143,Electronics shoes,Electronics shoes,91,yes,2025-07-03T01:32:56
+144,casual shirt,casual shirt,98,maybe,2025-07-12T09:17:05
+145,laptop under 20000,laptop under 20000,43,no,2025-07-22T13:02:29
+146,budget laptop,budget laptop,70,maybe,2025-07-27T11:04:23
+147,bluetooth speaker,bluetooth speaker,6,yes,2025-07-07T13:19:10
+148,nike air,nike air,14,maybe,2025-07-05T07:38:31
+149,top phone,top phone,29,yes,2025-07-16T01:12:45
+150,sports shirt,sports shirt,19,no,2025-07-05T17:47:22
+151,wireless watch,wireless watch,50,maybe,2025-07-24T01:59:36
+152,adidas,adidas,22,yes,2025-07-23T15:28:41
+153,running shirt,running shirt,46,yes,2025-06-27T22:14:15
+154,4k monitor,4k monitor,11,yes,2025-07-26T23:23:32
+155,budget phone,budget phone,68,no,2025-07-13T15:14:26
+156,wireless laptop,wireless laptop,86,maybe,2025-07-21T14:50:17
+157,smart earbuds,smart earbuds,14,no,2025-06-28T20:15:48
+158,shoes under 20000,shoes under 20000,92,yes,2025-07-03T07:54:24
+159,Electronics laptop,Electronics laptop,41,yes,2025-07-15T12:28:28
+160,expensive camera,expensive camera,9,yes,2025-07-12T19:51:04
+161,cheap laptop,cheap laptop,12,no,2025-07-09T12:33:12
+162,budget phone,budget phone,46,no,2025-06-30T17:03:32
+163,camera under 50000,camera under 50000,89,no,2025-07-09T14:12:25
+164,oled tv,oled tv,50,no,2025-07-25T10:35:24
+165,adidas ultraboost,adidas ultraboost,69,maybe,2025-07-01T17:19:48
+166,headphones under 10000,headphones under 10000,50,yes,2025-07-02T01:21:53
+167,top phone,top phone,31,no,2025-07-21T11:47:28
+168,Electronics phone,Electronics phone,47,maybe,2025-07-01T06:12:35
+169,laptop under 5000,laptop under 5000,8,no,2025-07-23T18:13:08
+170,oled monitor,oled monitor,59,yes,2025-07-04T00:05:34
+171,adidas ultraboost,adidas ultraboost,32,yes,2025-07-04T03:09:29
+172,running dress,running dress,18,yes,2025-07-20T23:18:55
+173,wireless headphones,wireless headphones,4,maybe,2025-07-24T14:08:20
+174,cheap phone,cheap phone,90,yes,2025-07-05T21:57:29
+175,adidas,adidas,77,yes,2025-07-10T18:23:05
+176,Electronics shoes,Electronics shoes,19,yes,2025-07-23T12:21:21
+177,running shoes,running shoes,73,no,2025-07-27T08:18:16
+178,budget phone,budget phone,96,yes,2025-07-18T10:33:46
+179,nike air,nike air,61,no,2025-07-08T04:20:03
+180,curved tv,curved tv,37,yes,2025-07-24T01:53:48
+181,gaming headphones,gaming headphones,5,maybe,2025-07-07T15:55:45
+182,budget laptop,budget laptop,51,no,2025-07-13T00:44:49
+183,headphones under 20000,headphones under 20000,74,maybe,2025-07-17T06:25:51
+184,wireless earbuds,wireless earbuds,21,no,2025-07-16T00:38:16
+185,adidas,adidas,17,maybe,2025-07-19T03:59:41
+186,sports dress,sports dress,8,yes,2025-07-23T00:35:27
+187,top phone,top phone,89,no,2025-07-19T19:35:27
+188,shoes under 50000,shoes under 50000,49,yes,2025-07-03T18:33:05
+189,Fashion shirt,Fashion shirt,25,no,2025-07-09T22:24:08
+190,samsung,samsung,10,no,2025-07-08T19:21:45
+191,4k tv,4k tv,37,yes,2025-07-01T00:10:01
+192,iphone,iphone,9,yes,2025-07-14T07:28:10
+193,Fashion laptop,Fashion laptop,71,yes,2025-06-28T22:04:41
+194,Electronics shoes,Electronics shoes,11,maybe,2025-07-26T11:00:02
+195,Home shirt,Home shirt,6,yes,2025-07-24T18:56:12
+196,4k monitor,4k monitor,2,no,2025-07-09T01:40:28
+197,portable watch,portable watch,25,no,2025-07-26T11:09:13
+198,cheap laptop,cheap laptop,90,maybe,2025-07-08T14:08:35
+199,nike,nike,53,maybe,2025-06-28T05:56:57
+200,iphone,iphone,65,yes,2025-07-01T08:17:03
+201,Home shirt,Home shirt,62,maybe,2025-06-30T18:09:51
+202,Fashion laptop,Fashion laptop,20,maybe,2025-07-09T00:18:28
+203,mobile under 5000,mobile under 5000,92,yes,2025-07-01T04:05:54
+204,casual dress,casual dress,21,maybe,2025-06-29T10:10:12
+205,nike air,nike air,58,yes,2025-07-13T22:32:54
+206,smart monitor,smart monitor,80,no,2025-07-01T08:07:34
+207,Home shirt,Home shirt,31,yes,2025-07-22T20:36:24
+208,apple,apple,73,maybe,2025-07-09T10:52:00
+209,mobile under 5000,mobile under 5000,19,no,2025-07-11T10:01:15
+210,iphone,iphone,64,yes,2025-07-21T11:07:12
+211,shoes under 10000,shoes under 10000,38,yes,2025-07-08T07:10:31
+212,nike,nike,74,no,2025-07-24T01:49:28
+213,4k tv,4k tv,23,maybe,2025-07-04T07:43:33
+214,shoes under 50000,shoes under 50000,33,no,2025-07-25T14:53:05
+215,gaming headphones,gaming headphones,63,yes,2025-07-25T20:54:23
+216,smart monitor,smart monitor,53,maybe,2025-07-20T20:16:22
+217,wireless phone,wireless phone,66,maybe,2025-07-09T16:41:01
+218,smart tv,smart tv,88,no,2025-07-20T20:37:29
+219,adidas ultraboost,adidas ultraboost,34,maybe,2025-07-17T15:49:50
+220,Home phone,Home phone,95,yes,2025-07-07T03:24:54
+221,iphone,iphone,20,yes,2025-07-02T11:28:08
+222,portable speaker,portable speaker,73,no,2025-07-02T14:30:14
+223,apple,apple,50,no,2025-07-18T19:46:56
+224,nike,nike,60,no,2025-07-15T02:21:28
+225,adidas ultraboost,adidas ultraboost,14,yes,2025-07-18T11:04:34
+226,gaming phone,gaming phone,99,no,2025-07-17T20:32:24
+227,sports shirt,sports shirt,9,no,2025-07-20T13:41:40
+228,curved tv,curved tv,90,maybe,2025-06-30T12:41:07
+229,mobile under 20000,mobile under 20000,59,yes,2025-07-02T16:14:11
+230,samsung galaxy,samsung galaxy,61,yes,2025-06-30T20:11:24
+231,formal dress,formal dress,5,maybe,2025-07-17T10:39:33
+232,best shoes,best shoes,56,no,2025-07-14T08:53:15
+233,running shoes,running shoes,3,maybe,2025-07-03T04:52:44
+234,cheap shoes,cheap shoes,82,yes,2025-07-09T23:16:37
+235,apple,apple,9,no,2025-07-07T04:47:24
+236,best shoes,best shoes,92,no,2025-07-07T03:10:50
+237,top shoes,top shoes,24,yes,2025-07-23T22:23:22
+238,adidas,adidas,44,no,2025-07-19T16:14:38
+239,budget phone,budget phone,54,no,2025-07-04T16:53:44
+240,headphones under 10000,headphones under 10000,90,no,2025-07-18T09:05:56
+241,curved tv,curved tv,72,maybe,2025-07-06T19:21:01
+242,running dress,running dress,86,maybe,2025-07-11T10:06:00
+243,premium headphones,premium headphones,94,maybe,2025-07-20T08:34:19
+244,4k tv,4k tv,59,yes,2025-07-10T00:37:01
+245,shoes under 5000,shoes under 5000,87,no,2025-07-01T13:24:04
+246,bluetooth earbuds,bluetooth earbuds,17,maybe,2025-07-19T09:51:22
+247,headphones under 5000,headphones under 5000,5,yes,2025-07-24T14:44:48
+248,sports dress,sports dress,70,yes,2025-07-02T15:38:35
+249,top shoes,top shoes,27,yes,2025-06-30T08:30:39
+250,Fashion shoes,Fashion shoes,3,no,2025-07-24T03:24:07
+251,bluetooth watch,bluetooth watch,64,maybe,2025-06-28T14:45:55
+252,camera under 50000,camera under 50000,46,no,2025-07-02T10:13:49
+253,adidas ultraboost,adidas ultraboost,67,no,2025-07-09T08:58:24
+254,apple,apple,59,no,2025-07-05T23:20:16
+255,oled tv,oled tv,70,no,2025-07-17T15:04:41
+256,cheap camera,cheap camera,82,no,2025-07-21T11:23:03
+257,samsung,samsung,14,yes,2025-07-21T06:23:40
+258,Home shirt,Home shirt,14,no,2025-07-08T06:36:18
+259,iphone,iphone,82,no,2025-07-17T08:49:01
+260,iphone,iphone,86,no,2025-06-30T17:53:11
+261,top laptop,top laptop,100,no,2025-07-05T21:23:15
+262,adidas ultraboost,adidas ultraboost,15,yes,2025-07-16T07:06:25
+263,mobile under 20000,mobile under 20000,60,no,2025-06-28T00:04:57
+264,best shoes,best shoes,29,maybe,2025-07-16T20:26:44
+265,smart watch,smart watch,34,no,2025-07-10T18:33:19
+266,top phone,top phone,54,yes,2025-07-19T23:41:40
+267,Electronics laptop,Electronics laptop,48,maybe,2025-07-11T17:54:38
+268,smart tv,smart tv,74,no,2025-07-18T10:24:38
+269,sports shoes,sports shoes,79,maybe,2025-07-24T21:05:18
+270,best camera,best camera,17,maybe,2025-07-21T12:35:04
+271,top camera,top camera,41,maybe,2025-07-05T09:55:21
+272,wireless laptop,wireless laptop,13,maybe,2025-07-07T02:49:06
+273,gaming headphones,gaming headphones,74,no,2025-07-12T07:15:39
+274,wireless earbuds,wireless earbuds,27,yes,2025-07-08T11:12:40
+275,samsung,samsung,56,yes,2025-06-30T17:42:33
+276,gaming headphones,gaming headphones,91,maybe,2025-07-26T00:21:55
+277,adidas,adidas,4,maybe,2025-07-24T05:16:28
+278,wireless headphones,wireless headphones,81,no,2025-06-30T20:35:31
+279,budget headphones,budget headphones,29,no,2025-07-13T02:56:50
+280,casual dress,casual dress,100,no,2025-06-30T16:10:25
+281,bluetooth earbuds,bluetooth earbuds,11,yes,2025-06-30T07:59:29
+282,Home phone,Home phone,15,no,2025-07-26T06:11:15
+283,samsung,samsung,19,no,2025-07-21T01:04:12
+284,wireless speaker,wireless speaker,10,no,2025-07-22T07:26:04
+285,oled monitor,oled monitor,13,no,2025-07-23T16:22:41
+286,Fashion phone,Fashion phone,63,maybe,2025-07-05T12:59:37
+287,apple,apple,88,no,2025-06-30T15:50:27
+288,cheap camera,cheap camera,21,yes,2025-07-22T13:14:04
+289,bluetooth speaker,bluetooth speaker,85,maybe,2025-07-01T18:54:28
+290,Electronics shoes,Electronics shoes,45,no,2025-07-06T22:04:23
+291,iphone,iphone,21,maybe,2025-07-01T05:24:16
+292,bluetooth speaker,bluetooth speaker,78,yes,2025-07-26T18:50:15
+293,iphone,iphone,67,maybe,2025-07-01T04:45:05
+294,budget phone,budget phone,15,yes,2025-07-09T07:36:13
+295,Fashion laptop,Fashion laptop,29,yes,2025-07-17T12:00:14
+296,premium phone,premium phone,62,yes,2025-07-03T17:14:57
+297,nike,nike,91,maybe,2025-07-25T13:17:28
+298,portable watch,portable watch,64,no,2025-07-09T20:25:59
+299,adidas ultraboost,adidas ultraboost,25,no,2025-07-26T00:03:39
+300,budget headphones,budget headphones,92,no,2025-07-26T18:14:11
+301,best shoes,best shoes,22,yes,2025-06-29T19:52:25
+302,camera under 50000,camera under 50000,55,maybe,2025-07-01T21:05:20
+303,smart watch,smart watch,14,maybe,2025-07-18T06:00:13
+304,expensive laptop,expensive laptop,73,no,2025-07-26T05:35:56
+305,4k monitor,4k monitor,22,yes,2025-07-25T08:06:30
+306,nike air,nike air,76,no,2025-07-23T06:39:26
+307,smart earbuds,smart earbuds,4,yes,2025-07-13T06:10:08
+308,premium phone,premium phone,24,no,2025-07-10T13:23:07
+309,running shoes,running shoes,85,no,2025-07-07T19:33:02
+310,oled monitor,oled monitor,16,yes,2025-07-13T03:37:19
+311,4k monitor,4k monitor,28,no,2025-07-09T11:39:38
+312,oled tv,oled tv,50,no,2025-07-10T19:02:05
+313,casual shoes,casual shoes,72,no,2025-07-17T02:41:43
+314,adidas,adidas,88,no,2025-07-04T06:03:20
+315,smart tv,smart tv,26,yes,2025-07-12T11:05:35
+316,camera under 5000,camera under 5000,36,no,2025-07-20T02:16:35
+317,samsung,samsung,58,yes,2025-07-13T05:56:40
+318,curved tv,curved tv,74,yes,2025-07-01T10:05:24
+319,bluetooth watch,bluetooth watch,74,yes,2025-06-28T08:25:28
+320,shoes under 10000,shoes under 10000,52,yes,2025-07-20T03:30:45
+321,iphone,iphone,44,maybe,2025-07-25T05:30:23
+322,Electronics shirt,Electronics shirt,13,no,2025-07-02T18:03:28
+323,smart earbuds,smart earbuds,97,no,2025-07-01T10:55:34
+324,best shoes,best shoes,64,maybe,2025-07-23T23:57:39
+325,Fashion shoes,Fashion shoes,90,no,2025-07-08T05:54:50
+326,mobile under 20000,mobile under 20000,80,yes,2025-07-22T10:58:11
+327,Electronics phone,Electronics phone,2,yes,2025-07-10T18:33:08
+328,nike,nike,89,maybe,2025-07-04T07:53:40
+329,top laptop,top laptop,12,yes,2025-07-14T20:11:46
+330,4k tv,4k tv,34,yes,2025-07-01T05:43:08
+331,samsung,samsung,39,yes,2025-07-09T18:11:00
+332,smart watch,smart watch,79,no,2025-07-15T20:06:05
+333,wireless speaker,wireless speaker,75,no,2025-07-11T17:36:20
+334,apple,apple,41,yes,2025-07-05T13:21:35
+335,expensive phone,expensive phone,67,maybe,2025-07-19T04:05:36
+336,sports dress,sports dress,63,no,2025-07-24T06:27:58
+337,curved tv,curved tv,12,no,2025-07-12T14:01:45
+338,bluetooth earbuds,bluetooth earbuds,72,yes,2025-07-27T14:13:39
+339,running shoes,running shoes,64,yes,2025-07-23T13:49:55
+340,running dress,running dress,28,no,2025-06-28T06:41:09
+341,top camera,top camera,14,no,2025-07-24T19:43:47
+342,formal shirt,formal shirt,91,no,2025-07-12T10:22:22
+343,gaming laptop,gaming laptop,29,no,2025-07-02T22:15:30
+344,expensive laptop,expensive laptop,100,no,2025-07-04T10:01:54
+345,running shirt,running shirt,55,yes,2025-07-10T17:41:47
+346,bluetooth speaker,bluetooth speaker,60,yes,2025-07-03T12:03:19
+347,apple,apple,3,no,2025-07-03T02:16:38
+348,premium laptop,premium laptop,61,maybe,2025-07-24T18:07:25
+349,adidas ultraboost,adidas ultraboost,46,no,2025-07-05T10:40:52
+350,samsung,samsung,46,no,2025-07-11T02:52:48
+351,casual shirt,casual shirt,65,no,2025-07-11T13:50:28
+352,nike air,nike air,7,no,2025-07-27T06:14:57
+353,smart speaker,smart speaker,7,maybe,2025-07-08T02:58:21
+354,expensive laptop,expensive laptop,38,yes,2025-07-14T13:03:21
+355,top shoes,top shoes,68,maybe,2025-07-07T18:46:46
+356,headphones under 50000,headphones under 50000,14,maybe,2025-07-10T17:08:05
+357,Home laptop,Home laptop,15,yes,2025-07-22T10:24:56
+358,samsung,samsung,5,maybe,2025-07-21T14:45:08
+359,wireless speaker,wireless speaker,69,yes,2025-07-10T02:08:55
+360,wireless watch,wireless watch,90,maybe,2025-06-30T08:45:23
+361,expensive camera,expensive camera,13,yes,2025-07-02T09:06:24
+362,portable speaker,portable speaker,22,yes,2025-07-18T11:04:22
+363,smart monitor,smart monitor,94,yes,2025-07-11T07:55:37
+364,apple,apple,65,maybe,2025-06-30T00:56:10
+365,shoes under 10000,shoes under 10000,22,no,2025-06-28T01:42:08
+366,apple,apple,24,no,2025-07-14T02:11:34
+367,laptop under 5000,laptop under 5000,86,no,2025-07-04T05:59:14
+368,cheap phone,cheap phone,23,no,2025-07-10T14:46:17
+369,apple,apple,87,yes,2025-07-05T17:49:40
+370,curved tv,curved tv,63,yes,2025-07-19T08:20:49
+371,mobile under 5000,mobile under 5000,3,maybe,2025-07-24T16:19:32
+372,wireless watch,wireless watch,65,yes,2025-07-18T15:51:45
+373,gaming laptop,gaming laptop,39,maybe,2025-07-25T03:04:30
+374,curved monitor,curved monitor,95,no,2025-06-28T08:50:14
+375,nike air,nike air,85,no,2025-07-03T07:54:50
+376,smart earbuds,smart earbuds,2,no,2025-07-01T13:14:12
+377,smart watch,smart watch,100,maybe,2025-07-05T03:13:55
+378,mobile under 20000,mobile under 20000,88,maybe,2025-07-24T09:13:48
+379,Electronics shirt,Electronics shirt,29,maybe,2025-06-29T15:32:49
+380,premium phone,premium phone,4,yes,2025-07-15T19:44:21
+381,cheap laptop,cheap laptop,96,yes,2025-07-26T04:14:39
+382,sports dress,sports dress,14,no,2025-07-24T17:18:35
+383,adidas ultraboost,adidas ultraboost,68,yes,2025-07-05T02:06:47
+384,smart earbuds,smart earbuds,51,maybe,2025-07-18T18:18:33
+385,cheap shoes,cheap shoes,25,yes,2025-07-04T02:03:22
+386,nike air,nike air,79,yes,2025-06-29T22:18:19
+387,expensive shoes,expensive shoes,37,yes,2025-07-12T20:43:06
+388,Fashion laptop,Fashion laptop,60,maybe,2025-07-15T14:25:16
+389,premium headphones,premium headphones,72,maybe,2025-06-29T20:03:08
+390,premium phone,premium phone,37,yes,2025-07-15T06:26:57
+391,bluetooth earbuds,bluetooth earbuds,6,yes,2025-07-08T02:19:41
+392,bluetooth speaker,bluetooth speaker,63,no,2025-07-10T00:17:40
+393,Fashion shoes,Fashion shoes,85,yes,2025-07-02T21:20:04
+394,Fashion laptop,Fashion laptop,45,no,2025-07-15T01:38:12
+395,samsung galaxy,samsung galaxy,12,maybe,2025-07-25T01:52:58
+396,wireless watch,wireless watch,26,no,2025-07-17T15:02:07
+397,nike,nike,29,yes,2025-07-05T09:38:20
+398,shoes under 10000,shoes under 10000,87,maybe,2025-07-09T09:23:25
+399,expensive camera,expensive camera,13,no,2025-07-05T18:53:58
+400,smart speaker,smart speaker,73,no,2025-07-06T11:51:08
+401,oled tv,oled tv,33,yes,2025-07-17T21:55:45
+402,top shoes,top shoes,40,yes,2025-06-29T02:26:58
+403,portable watch,portable watch,24,no,2025-07-06T14:32:30
+404,best laptop,best laptop,68,no,2025-07-14T00:35:43
+405,smart monitor,smart monitor,46,no,2025-07-17T21:15:07
+406,camera under 50000,camera under 50000,60,yes,2025-07-09T22:42:25
+407,iphone,iphone,99,no,2025-07-10T20:25:21
+408,apple,apple,79,no,2025-07-05T15:03:01
+409,formal shoes,formal shoes,80,maybe,2025-07-03T03:30:42
+410,bluetooth earbuds,bluetooth earbuds,17,no,2025-07-16T11:15:53
+411,Fashion shirt,Fashion shirt,7,yes,2025-06-29T18:41:19
+412,Fashion phone,Fashion phone,43,maybe,2025-07-20T17:57:54
+413,nike,nike,73,no,2025-07-08T16:43:31
+414,4k tv,4k tv,95,maybe,2025-07-07T14:05:26
+415,iphone,iphone,90,yes,2025-07-20T05:51:48
+416,samsung galaxy,samsung galaxy,72,maybe,2025-07-14T20:57:10
+417,laptop under 10000,laptop under 10000,87,maybe,2025-07-12T17:08:40
+418,premium headphones,premium headphones,40,maybe,2025-07-08T22:44:21
+419,Fashion laptop,Fashion laptop,15,yes,2025-07-08T17:17:46
+420,Electronics phone,Electronics phone,67,yes,2025-06-29T01:08:32
+421,casual shoes,casual shoes,61,yes,2025-07-07T06:35:02
+422,adidas ultraboost,adidas ultraboost,51,yes,2025-07-17T05:49:04
+423,nike,nike,52,no,2025-07-13T20:01:27
+424,budget headphones,budget headphones,34,maybe,2025-07-11T10:10:02
+425,headphones under 5000,headphones under 5000,56,yes,2025-07-01T06:27:08
+426,Electronics laptop,Electronics laptop,96,maybe,2025-07-11T10:46:32
+427,casual dress,casual dress,95,maybe,2025-07-14T22:41:10
+428,samsung galaxy,samsung galaxy,61,no,2025-07-22T15:04:19
+429,smart watch,smart watch,13,maybe,2025-07-17T07:13:49
+430,shoes under 20000,shoes under 20000,51,no,2025-07-23T22:18:28
+431,adidas,adidas,54,no,2025-07-13T23:23:20
+432,gaming phone,gaming phone,59,yes,2025-06-29T05:43:42
+433,best shoes,best shoes,5,maybe,2025-07-03T11:57:15
+434,mobile under 20000,mobile under 20000,18,no,2025-07-10T13:54:32
+435,shoes under 5000,shoes under 5000,21,no,2025-07-06T13:37:04
+436,samsung galaxy,samsung galaxy,45,maybe,2025-07-26T02:00:26
+437,adidas ultraboost,adidas ultraboost,66,yes,2025-07-10T18:51:43
+438,budget phone,budget phone,84,maybe,2025-06-29T18:08:39
+439,curved tv,curved tv,36,maybe,2025-07-03T03:52:10
+440,portable speaker,portable speaker,83,no,2025-07-26T20:37:38
+441,expensive laptop,expensive laptop,74,maybe,2025-07-18T23:52:29
+442,nike air,nike air,17,maybe,2025-07-14T16:19:33
+443,smart monitor,smart monitor,9,yes,2025-07-13T03:01:55
+444,Home laptop,Home laptop,30,yes,2025-07-19T02:00:25
+445,adidas,adidas,87,no,2025-07-27T07:51:21
+446,oled tv,oled tv,14,yes,2025-07-22T17:25:20
+447,expensive phone,expensive phone,8,maybe,2025-07-03T12:18:30
+448,bluetooth speaker,bluetooth speaker,96,yes,2025-07-16T14:21:23
+449,shoes under 5000,shoes under 5000,23,no,2025-07-25T21:20:42
+450,adidas,adidas,49,yes,2025-07-07T03:01:45
+451,samsung galaxy,samsung galaxy,26,no,2025-07-10T06:20:40
+452,camera under 20000,camera under 20000,29,yes,2025-06-30T01:17:07
+453,wireless headphones,wireless headphones,25,yes,2025-07-19T01:36:54
+454,Home phone,Home phone,27,yes,2025-06-27T23:32:30
+455,gaming phone,gaming phone,100,no,2025-07-23T03:19:20
+456,iphone,iphone,44,yes,2025-07-24T00:54:48
+457,adidas ultraboost,adidas ultraboost,25,yes,2025-07-07T11:08:02
+458,headphones under 20000,headphones under 20000,46,maybe,2025-07-15T13:55:12
+459,samsung galaxy,samsung galaxy,9,no,2025-07-18T20:04:09
+460,expensive phone,expensive phone,73,yes,2025-07-01T07:05:48
+461,premium laptop,premium laptop,16,no,2025-07-13T22:16:56
+462,running dress,running dress,70,no,2025-07-13T03:18:34
+463,Electronics shoes,Electronics shoes,33,no,2025-07-03T22:46:13
+464,4k tv,4k tv,37,yes,2025-07-12T11:28:19
+465,samsung galaxy,samsung galaxy,67,maybe,2025-07-22T12:24:42
+466,nike air,nike air,52,maybe,2025-07-12T21:54:50
+467,Home phone,Home phone,75,no,2025-07-17T17:23:01
+468,bluetooth speaker,bluetooth speaker,44,no,2025-07-13T17:36:07
+469,wireless earbuds,wireless earbuds,98,yes,2025-07-17T10:24:06
+470,budget headphones,budget headphones,94,no,2025-07-12T06:02:04
+471,Electronics shirt,Electronics shirt,10,maybe,2025-07-24T19:30:31
+472,Fashion phone,Fashion phone,54,maybe,2025-07-04T01:52:20
+473,adidas,adidas,17,no,2025-07-07T05:04:52
+474,Electronics phone,Electronics phone,64,maybe,2025-07-18T07:25:36
+475,formal shirt,formal shirt,62,no,2025-07-16T07:18:27
+476,running shoes,running shoes,4,yes,2025-07-06T08:19:40
+477,adidas ultraboost,adidas ultraboost,88,maybe,2025-07-27T18:41:53
+478,Home shirt,Home shirt,7,no,2025-07-25T12:37:37
+479,top camera,top camera,90,no,2025-07-12T12:12:12
+480,samsung galaxy,samsung galaxy,15,no,2025-07-17T14:40:59
+481,nike,nike,46,yes,2025-07-24T11:57:52
+482,curved tv,curved tv,31,yes,2025-06-27T22:02:39
+483,samsung,samsung,30,no,2025-07-12T15:36:40
+484,iphone,iphone,2,maybe,2025-07-11T19:51:00
+485,running shoes,running shoes,8,yes,2025-07-08T02:27:07
+486,laptop under 20000,laptop under 20000,6,no,2025-07-18T18:25:38
+487,oled monitor,oled monitor,17,maybe,2025-07-26T01:18:09
+488,expensive phone,expensive phone,85,yes,2025-07-27T08:23:00
+489,nike,nike,70,yes,2025-07-13T13:01:08
+490,shoes under 10000,shoes under 10000,57,maybe,2025-07-20T11:19:18
+491,smart watch,smart watch,38,maybe,2025-07-19T08:17:21
+492,formal shirt,formal shirt,90,maybe,2025-07-19T08:43:29
+493,iphone,iphone,7,no,2025-07-08T06:33:05
+494,expensive shoes,expensive shoes,11,yes,2025-07-22T17:07:56
+495,budget phone,budget phone,95,maybe,2025-07-20T20:52:23
+496,running shirt,running shirt,93,yes,2025-07-06T03:16:34
+497,Electronics shirt,Electronics shirt,84,no,2025-07-02T00:21:55
+498,samsung,samsung,64,yes,2025-07-11T16:12:23
+499,smart watch,smart watch,50,no,2025-07-22T22:06:59
+500,samsung,samsung,36,maybe,2025-07-14T04:05:38

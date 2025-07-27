@@ -8,4 +8,5 @@ transformers
 torch
 matplotlib
 seaborn
-tqdm 
+tqdm
+streamlit 

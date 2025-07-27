@@ -108,6 +108,10 @@ class TrieAutosuggest:
         
         # Return top suggestions with scores
         return matches[:max_suggestions]
+    
+    def search(self, prefix: str, max_suggestions: int = 10) -> List[str]:
+        """Alias for get_suggestions to maintain compatibility with integrated system."""
+        return self.get_suggestions(prefix, max_suggestions)
 
 # Test the Trie autosuggest
 if __name__ == "__main__":

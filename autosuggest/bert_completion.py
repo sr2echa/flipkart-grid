@@ -67,231 +67,256 @@ class BERTCompletion:
         
         return patterns
     
-    def complete_query(self, prefix: str, max_completions: int = 5) -> List[str]:
-        """Complete a query prefix using BERT masked language modeling."""
-        if not prefix.strip():
+    def complete_query(self, query: str, max_suggestions: int = 5) -> List[str]:
+        """Complete a query using BERT and pattern matching."""
+        if not query.strip():
             return []
         
-        prefix = prefix.lower().strip()
+        query_lower = query.lower().strip()
+        suggestions = []
         
-        # Try different completion strategies
-        completions = []
+        # 1. Pattern-based completions
+        pattern_suggestions = self._get_pattern_completions(query_lower)
+        suggestions.extend(pattern_suggestions)
         
-        # Strategy 1: Direct pattern matching
-        pattern_completions = self._pattern_completion(prefix)
-        completions.extend(pattern_completions)
+        # 2. Contextual completions
+        contextual_suggestions = self._get_contextual_completions(query_lower)
+        suggestions.extend(contextual_suggestions)
         
-        # Strategy 2: BERT masked completion
-        bert_completions = self._bert_masked_completion(prefix)
-        completions.extend(bert_completions)
+        # 3. Brand completions
+        brand_suggestions = self._get_brand_completions(query_lower)
+        suggestions.extend(brand_suggestions)
         
-        # Strategy 3: Context-aware completion
-        context_completions = self._context_completion(prefix)
-        completions.extend(context_completions)
+        # 4. Category completions
+        category_suggestions = self._get_category_completions(query_lower)
+        suggestions.extend(category_suggestions)
         
-        # Remove duplicates and limit results
-        unique_completions = list(dict.fromkeys(completions))
-        return unique_completions[:max_completions]
+        # 5. Feature completions
+        feature_suggestions = self._get_feature_completions(query_lower)
+        suggestions.extend(feature_suggestions)
+        
+        # 6. Use case completions
+        use_case_suggestions = self._get_use_case_completions(query_lower)
+        suggestions.extend(use_case_suggestions)
+        
+        # 7. Dynamic completions based on query analysis
+        dynamic_suggestions = self._get_dynamic_completions(query_lower)
+        suggestions.extend(dynamic_suggestions)
+        
+        # Remove duplicates and return top suggestions
+        unique_suggestions = list(dict.fromkeys(suggestions))  # Preserve order
+        return unique_suggestions[:max_suggestions]
+
+    def _get_pattern_completions(self, query: str) -> List[str]:
+        """Get pattern-based completions."""
+        suggestions = []
+        
+        # Product patterns
+        product_patterns = {
+            'laptop': ['gaming laptop', 'business laptop', 'student laptop', 'budget laptop', 'premium laptop', 'dell laptop', 'hp laptop'],
+            'phone': ['smartphone', 'mobile phone', 'android phone', 'iphone', 'budget phone', 'premium phone', '5g phone'],
+            'mobile': ['smartphone', 'mobile phone', 'android phone', 'iphone', 'budget mobile', 'premium mobile', '5g mobile'],
+            'shoes': ['running shoes', 'casual shoes', 'formal shoes', 'sports shoes', 'sneakers', 'boots', 'nike shoes'],
+            'shirt': ['formal shirt', 'casual shirt', 'polo shirt', 't-shirt', 'dress shirt', 'business shirt'],
+            'headphones': ['wireless headphones', 'bluetooth headphones', 'noise cancelling headphones', 'gaming headphones', 'sports headphones'],
+            'camera': ['dslr camera', 'mirrorless camera', 'action camera', 'point and shoot', 'canon camera', 'nikon camera'],
+            'watch': ['smartwatch', 'digital watch', 'analog watch', 'fitness watch', 'luxury watch', 'apple watch'],
+            'bag': ['laptop bag', 'handbag', 'backpack', 'travel bag', 'messenger bag', 'school bag'],
+            'jersey': ['cricket jersey', 'football jersey', 'ipl jersey', 'team jersey', 'sports jersey', 'mumbai indians jersey'],
+            'formal': ['formal shirt', 'formal shoes', 'formal dress', 'formal pants', 'formal wear', 'business formal'],
+            'gaming': ['gaming laptop', 'gaming mouse', 'gaming keyboard', 'gaming headset', 'gaming chair', 'gaming monitor'],
+            'wireless': ['wireless headphones', 'wireless earbuds', 'wireless keyboard', 'wireless mouse', 'wireless speaker'],
+            'budget': ['budget phone', 'budget laptop', 'budget headphones', 'budget camera', 'budget watch', 'budget mobile'],
+            'premium': ['premium phone', 'premium laptop', 'premium headphones', 'premium camera', 'premium watch', 'premium mobile']
+        }
+        
+        # Match query to patterns
+        for pattern, completions in product_patterns.items():
+            if pattern in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_contextual_completions(self, query: str) -> List[str]:
+        """Get contextual completions based on query context."""
+        suggestions = []
+        
+        # Contextual patterns based on query analysis
+        contextual_patterns = {
+            'student': ['student laptop', 'student bag', 'student headphones', 'student watch', 'student essentials'],
+            'business': ['business laptop', 'business shirt', 'business bag', 'business watch', 'business formal'],
+            'gaming': ['gaming laptop', 'gaming mouse', 'gaming keyboard', 'gaming headset', 'gaming setup'],
+            'fitness': ['fitness watch', 'fitness tracker', 'sports shoes', 'fitness headphones', 'workout gear'],
+            'travel': ['travel bag', 'travel camera', 'travel adapter', 'travel pillow', 'travel essentials'],
+            'office': ['office chair', 'office desk', 'office laptop', 'office headphones', 'office supplies'],
+            'home': ['home speaker', 'home camera', 'home laptop', 'home tv', 'home decor'],
+            'outdoor': ['outdoor camera', 'outdoor watch', 'outdoor shoes', 'outdoor bag', 'outdoor gear'],
+            'professional': ['professional laptop', 'professional camera', 'professional headphones', 'professional attire'],
+            'casual': ['casual shoes', 'casual shirt', 'casual bag', 'casual wear', 'casual style']
+        }
+        
+        # Match query to contextual patterns
+        for context, completions in contextual_patterns.items():
+            if context in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_brand_completions(self, query: str) -> List[str]:
+        """Get brand-specific completions."""
+        suggestions = []
+        
+        # Brand patterns
+        brand_patterns = {
+            'samsung': ['samsung galaxy', 'samsung mobile', 'samsung phone', 'samsung tablet', 'samsung tv', 'samsung galaxy s23'],
+            'apple': ['iphone', 'ipad', 'macbook', 'apple watch', 'airpods', 'iphone 15', 'macbook air'],
+            'nike': ['nike shoes', 'nike sneakers', 'nike running', 'nike sports', 'nike air max', 'nike air force'],
+            'adidas': ['adidas shoes', 'adidas sneakers', 'adidas running', 'adidas sports', 'adidas ultraboost'],
+            'xiaomi': ['xiaomi phone', 'xiaomi mobile', 'xiaomi redmi', 'xiaomi mi', 'xiaomi pocophone', 'xiaomi redmi note'],
+            'oneplus': ['oneplus phone', 'oneplus mobile', 'oneplus nord', 'oneplus 11', 'oneplus nord ce'],
+            'dell': ['dell laptop', 'dell inspiron', 'dell xps', 'dell latitude', 'dell precision'],
+            'hp': ['hp laptop', 'hp pavilion', 'hp envy', 'hp spectre', 'hp omen'],
+            'canon': ['canon camera', 'canon dslr', 'canon mirrorless', 'canon lens', 'canon eos'],
+            'nikon': ['nikon camera', 'nikon dslr', 'nikon mirrorless', 'nikon lens', 'nikon z'],
+            'sony': ['sony tv', 'sony headphones', 'sony camera', 'sony playstation', 'sony wh'],
+            'lg': ['lg tv', 'lg refrigerator', 'lg washing machine', 'lg oled', 'lg gram'],
+            'lenovo': ['lenovo laptop', 'lenovo thinkpad', 'lenovo tablet', 'lenovo ideapad', 'lenovo yoga'],
+            'asus': ['asus laptop', 'asus gaming', 'asus rog', 'asus tuf', 'asus zenbook']
+        }
+        
+        # Match query to brand patterns
+        for brand, completions in brand_patterns.items():
+            if brand in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_category_completions(self, query: str) -> List[str]:
+        """Get category-specific completions."""
+        suggestions = []
+        
+        # Category patterns
+        category_patterns = {
+            'electronics': ['smartphone', 'laptop', 'tablet', 'headphones', 'camera', 'tv', 'speaker'],
+            'fashion': ['shoes', 'shirt', 'jeans', 'dress', 'bag', 'watch', 'jewelry'],
+            'home': ['furniture', 'kitchen', 'decor', 'appliances', 'lighting', 'storage'],
+            'sports': ['sports shoes', 'sports jersey', 'fitness tracker', 'sports bag', 'sports equipment'],
+            'beauty': ['cosmetics', 'skincare', 'makeup', 'perfume', 'hair care', 'beauty tools'],
+            'books': ['fiction', 'non-fiction', 'academic', 'children books', 'comics', 'magazines'],
+            'toys': ['educational toys', 'board games', 'outdoor toys', 'building blocks', 'dolls'],
+            'automotive': ['car accessories', 'bike accessories', 'car care', 'bike care', 'safety gear']
+        }
+        
+        # Match query to category patterns
+        for category, completions in category_patterns.items():
+            if category in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_feature_completions(self, query: str) -> List[str]:
+        """Get feature-specific completions."""
+        suggestions = []
+        
+        # Feature patterns
+        feature_patterns = {
+            'wireless': ['wireless headphones', 'wireless earbuds', 'wireless keyboard', 'wireless mouse', 'wireless speaker'],
+            'bluetooth': ['bluetooth headphones', 'bluetooth speaker', 'bluetooth keyboard', 'bluetooth mouse'],
+            'gaming': ['gaming laptop', 'gaming mouse', 'gaming keyboard', 'gaming headset', 'gaming chair'],
+            'waterproof': ['waterproof phone', 'waterproof watch', 'waterproof camera', 'waterproof bag'],
+            'fast': ['fast charger', 'fast laptop', 'fast phone', 'fast delivery', 'fast processor'],
+            'lightweight': ['lightweight laptop', 'lightweight headphones', 'lightweight bag', 'lightweight camera'],
+            'portable': ['portable speaker', 'portable charger', 'portable camera', 'portable laptop'],
+            'smart': ['smartphone', 'smartwatch', 'smart tv', 'smart speaker', 'smart home'],
+            'noise': ['noise cancelling headphones', 'noise reduction', 'noise isolation'],
+            'touch': ['touch screen', 'touch laptop', 'touch phone', 'touch tablet']
+        }
+        
+        # Match query to feature patterns
+        for feature, completions in feature_patterns.items():
+            if feature in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_use_case_completions(self, query: str) -> List[str]:
+        """Get use-case specific completions."""
+        suggestions = []
+        
+        # Use case patterns
+        use_case_patterns = {
+            'work': ['work laptop', 'work bag', 'work shoes', 'work headphones', 'office supplies'],
+            'study': ['study laptop', 'study table', 'study chair', 'study lamp', 'study materials'],
+            'travel': ['travel bag', 'travel camera', 'travel adapter', 'travel pillow', 'travel essentials'],
+            'gym': ['gym shoes', 'gym bag', 'fitness tracker', 'sports headphones', 'workout clothes'],
+            'party': ['party dress', 'party shoes', 'party bag', 'party accessories', 'party makeup'],
+            'wedding': ['wedding dress', 'wedding shoes', 'wedding jewelry', 'wedding accessories'],
+            'birthday': ['birthday gift', 'birthday cake', 'birthday decorations', 'birthday party'],
+            'christmas': ['christmas gift', 'christmas tree', 'christmas decorations', 'christmas lights']
+        }
+        
+        # Match query to use case patterns
+        for use_case, completions in use_case_patterns.items():
+            if use_case in query:
+                suggestions.extend(completions)
+        
+        return suggestions
+
+    def _get_dynamic_completions(self, query: str) -> List[str]:
+        """Get dynamic completions based on query analysis."""
+        suggestions = []
+        query_words = query.split()
+        
+        # Generate word combinations
+        if len(query_words) >= 2:
+            for i, word1 in enumerate(query_words):
+                for j, word2 in enumerate(query_words[i+1:], i+1):
+                    if len(word1) > 2 and len(word2) > 2:
+                        combination = f"{word1} {word2}"
+                        suggestions.append(combination)
+        
+        # Add common modifiers
+        modifiers = ['best', 'top', 'latest', 'new', 'popular', 'trending', 'cheap', 'expensive', 'premium', 'budget']
+        for modifier in modifiers:
+            if modifier not in query:
+                suggestions.append(f"{modifier} {query}")
+        
+        # Add common suffixes
+        suffixes = ['online', 'near me', 'delivery', 'pickup', 'discount', 'offer', 'sale']
+        for suffix in suffixes:
+            suggestions.append(f"{query} {suffix}")
+        
+        return suggestions
     
-    def _pattern_completion(self, prefix: str) -> List[str]:
-        """Complete using predefined patterns."""
-        completions = []
+    def _bert_completion(self, query: str) -> List[str]:
+        """Generate BERT-based completions for short queries."""
+        suggestions = []
         
-        # Common e-commerce completions
-        if prefix.startswith("phone"):
-            completions.extend([
-                "phone under 10000",
-                "phone above 20000",
-                "phone between 10000 and 20000"
-            ])
-        elif prefix.startswith("laptop"):
-            completions.extend([
-                "laptop under 50000",
-                "laptop above 100000",
-                "laptop for gaming"
-            ])
-        elif prefix.startswith("headphone"):
-            completions.extend([
-                "headphones under 5000",
-                "headphones above 10000",
-                "bluetooth headphones"
-            ])
-        elif prefix.startswith("shoe"):
-            completions.extend([
-                "shoes under 2000",
-                "shoes above 5000",
-                "casual shoes"
-            ])
-        elif prefix.startswith("watch"):
-            completions.extend([
-                "watch under 5000",
-                "watch above 10000",
-                "smartwatch"
-            ])
-        elif prefix.startswith("tv"):
-            completions.extend([
-                "tv under 30000",
-                "tv above 50000",
-                "smart tv"
-            ])
-        elif prefix.startswith("tablet"):
-            completions.extend([
-                "tablet under 20000",
-                "tablet above 30000"
-            ])
-        elif prefix.startswith("camera"):
-            completions.extend([
-                "camera under 10000",
-                "camera above 20000"
-            ])
-        elif prefix.startswith("speaker"):
-            completions.extend([
-                "speaker under 5000",
-                "bluetooth speaker"
-            ])
-        elif prefix.startswith("keyboard"):
-            completions.extend([
-                "keyboard under 2000",
-                "mechanical keyboard"
-            ])
-        elif prefix.startswith("mouse"):
-            completions.extend([
-                "mouse under 1000",
-                "gaming mouse"
-            ])
-        elif prefix.startswith("charger"):
-            completions.extend([
-                "charger under 1000",
-                "fast charger"
-            ])
-        elif prefix.startswith("case"):
-            completions.extend([
-                "case under 500",
-                "phone case"
-            ])
-        elif prefix.startswith("bag"):
-            completions.extend([
-                "bag under 2000",
-                "laptop bag"
-            ])
-        elif prefix.startswith("wallet"):
-            completions.extend([
-                "wallet under 1000",
-                "leather wallet"
-            ])
-        elif prefix.startswith("hoodie"):
-            completions.extend([
-                "hoodie under 2000",
-                "casual hoodie"
-            ])
-        elif prefix.startswith("jean"):
-            completions.extend([
-                "jeans under 2000",
-                "blue jeans"
-            ])
-        elif prefix.startswith("shirt"):
-            completions.extend([
-                "shirt under 1500",
-                "formal shirt"
-            ])
-        elif prefix.startswith("sneaker"):
-            completions.extend([
-                "sneakers under 3000",
-                "running sneakers"
-            ])
-        
-        return completions
-    
-    def _bert_masked_completion(self, prefix: str) -> List[str]:
-        """Complete using BERT masked language modeling."""
-        completions = []
-        
-        # Create masked input
-        masked_input = prefix + " [MASK]"
-        
-        try:
-            # Tokenize input
-            inputs = self.tokenizer(masked_input, return_tensors="pt")
-            
-            # Get model predictions
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                predictions = outputs.logits
-            
-            # Get top predictions for the masked token
-            masked_index = torch.where(inputs["input_ids"][0] == self.tokenizer.mask_token_id)[0]
-            if len(masked_index) > 0:
-                masked_index = masked_index[0]
-                probs = torch.softmax(predictions[0, masked_index], dim=-1)
-                top_tokens = torch.topk(probs, 10).indices
+        # Only use BERT for very short queries to avoid generic completions
+        if len(query) <= 4:
+            try:
+                # Create masked input for short queries
+                masked_input = f"{query} [MASK]"
+                inputs = self.tokenizer(masked_input, return_tensors="pt")
                 
-                # Decode top tokens
-                for token_id in top_tokens:
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
+                    predictions = outputs.logits[0, -1, :]
+                    top_k = torch.topk(predictions, 10)
+                
+                # Get top predictions and filter for relevance
+                for token_id in top_k.indices:
                     token = self.tokenizer.decode([token_id])
-                    completion = prefix + " " + token.strip()
-                    if len(completion.split()) <= 4:  # Limit completion length
-                        completions.append(completion)
+                    if token.strip() and len(token.strip()) > 1:
+                        completion = f"{query} {token.strip()}"
+                        # Only add if it makes sense (not punctuation or generic words)
+                        if not any(char in token for char in '.,;:!?') and token.strip() not in ['the', 'a', 'an', 'and', 'or']:
+                            suggestions.append(completion)
+                
+            except Exception as e:
+                print(f"BERT completion error: {e}")
         
-        except Exception as e:
-            print(f"BERT completion error: {e}")
-        
-        return completions[:3]  # Limit BERT completions
-    
-    def _context_completion(self, prefix: str) -> List[str]:
-        """Complete using context-aware patterns."""
-        completions = []
-        
-        # Context-aware completions based on common e-commerce patterns
-        if "phone" in prefix or "mobile" in prefix:
-            completions.extend([
-                prefix + " under 15000",
-                prefix + " above 25000",
-                prefix + " with camera",
-                prefix + " for gaming"
-            ])
-        elif "laptop" in prefix:
-            completions.extend([
-                prefix + " under 50000",
-                prefix + " for work",
-                prefix + " with ssd",
-                prefix + " gaming"
-            ])
-        elif "headphone" in prefix or "earbud" in prefix:
-            completions.extend([
-                prefix + " under 5000",
-                prefix + " bluetooth",
-                prefix + " wireless",
-                prefix + " noise cancelling"
-            ])
-        elif "shoe" in prefix or "sneaker" in prefix:
-            completions.extend([
-                prefix + " under 3000",
-                prefix + " for running",
-                prefix + " casual",
-                prefix + " sports"
-            ])
-        elif "watch" in prefix:
-            completions.extend([
-                prefix + " under 5000",
-                prefix + " digital",
-                prefix + " analog",
-                prefix + " smart"
-            ])
-        elif "tv" in prefix:
-            completions.extend([
-                prefix + " under 30000",
-                prefix + " smart",
-                prefix + " 4k",
-                prefix + " led"
-            ])
-        elif "tablet" in prefix:
-            completions.extend([
-                prefix + " under 20000",
-                prefix + " android",
-                prefix + " for kids"
-            ])
-        
-        return completions
+        return suggestions[:5]  # Limit BERT suggestions
 
 # Test the BERT completion
 if __name__ == "__main__":
