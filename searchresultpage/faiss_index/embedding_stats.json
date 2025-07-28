@@ -1,0 +1,12 @@
+{
+  "original_products": 5000,
+  "final_products": 5000,
+  "unique_categories": 4,
+  "unique_brands": 37,
+  "embedding_dimension": 384,
+  "embedding_generation_time": 96.98744511604309,
+  "failed_products": 0,
+  "faiss_build_time": 0.014421463012695312,
+  "model_name": "all-MiniLM-L6-v2",
+  "build_timestamp": 1753678362.8352058
+}
