@@ -1,37 +1,34 @@
-# requirements.txt
+# Grid 7.0 - Requirements File (FIXED VERSION COMPATIBILITY)
+# ================================================================
 
-# Web Requests
-requests
+sentence-transformers==2.7.0
+huggingface-hub>=0.16.0
+transformers>=4.30.0
+torch>=2.0.0,<2.2.0
+tokenizers>=0.15.0,<0.16.0
+accelerate>=0.20.0
 
-# Core ML & Data Science
-pandas
-numpy==1.24.3
-scikit-learn
-xgboost
-torch
-transformers
-sentence-transformers
-faiss-cpu
+faiss-cpu==1.7.4
+numpy>=1.24.0,<1.26.0
+pandas>=2.0.0,<2.1.0
+scikit-learn>=1.3.0,<1.4.0
+scipy>=1.11.0,<1.12.0
 
-# NLP Libraries
-spacy==3.6.1
-# Run after installation: python -m spacy download en_core_web_sm
+fastapi==0.104.1
+pydantic>=2.5.0,<3.0.0
+uvicorn[standard]==0.24.0
 
-# API & Web Server
-fastapi
-uvicorn[standard]
+tqdm>=4.65.0
+requests>=2.31.0
 
-# Utilities & Visualization
-matplotlib
-seaborn
-tqdm
+# Optional: For GPU acceleration (uncomment if you have CUDA)
+# faiss-gpu==1.7.4
 
-# Additional dependencies for compatibility
-thinc
-catalogue
-pydantic
-typing-extensions
+# Development Tools (optional)
+# jupyter>=1.0.0
+# matplotlib>=3.7.0
+# seaborn>=0.12.0
 
-# Development tools (optional)
-jupyter
-ipykernel
+# Production Deployment (optional)
+# gunicorn>=21.2.0
+# redis>=4.6.0
