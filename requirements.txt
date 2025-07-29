@@ -7,6 +7,8 @@ transformers>=4.30.0
 torch>=2.0.0,<2.2.0
 tokenizers>=0.15.0,<0.16.0
 accelerate>=0.20.0
+spacy
+
 
 faiss-cpu==1.7.4
 numpy>=1.24.0,<1.26.0
