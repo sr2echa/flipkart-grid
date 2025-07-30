@@ -20,7 +20,7 @@ import traceback
 
 # Import the hybrid searcher for semantic search
 from hybrid_search import HybridSearcher
-# from reranking_model import RerankingModel
+from reranking_model import RerankingModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,12 +28,13 @@ logger = logging.getLogger(__name__)
 
 # Global variables for loaded models
 hybrid_searcher = None
-# reranking_model = None
+reranking_model = None
 
 # Configuration paths
 SPACY_MODEL_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\searchresultpage\\spacy_ner_model"
 FAISS_INDEX_DIR = "./faiss_index"
 PRODUCT_CATALOG_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\product_catalog_merged.csv"
+RERANKING_MODEL_PATH = "lgbm_rerank_model_with_label_fix.txt"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI):
     Lifespan context manager to handle startup and shutdown events.
     This ensures all models are loaded once at startup and cleaned up on shutdown.
     """
-    global hybrid_searcher
+    global hybrid_searcher, reranking_model
     
     # Startup: Load all models once
     logger.info("🚀 Starting up the Grid 7.0 Semantic Search API server...")
@@ -57,9 +58,14 @@ async def lifespan(app: FastAPI):
         )
         logger.info("✅ Semantic Search System loaded successfully!")
         
+        # Initialize Reranking Model
+        logger.info("🎯 Initializing Reranking Model...")
+        reranking_model = RerankingModel(model_path=RERANKING_MODEL_PATH)
+        logger.info("✅ Reranking Model loaded successfully!")
+        
     except Exception as e:
-        logger.error(f"❌ Failed to initialize HybridSearcher: {e}")
-        raise RuntimeError(f"Failed to initialize HybridSearcher: {e}")
+        logger.error(f"❌ Failed to initialize models: {e}")
+        raise RuntimeError(f"Failed to initialize models: {e}")
     
     logger.info("🎉 All systems ready! API is now serving requests.")
     logger.info("=" * 60)
@@ -69,6 +75,7 @@ async def lifespan(app: FastAPI):
     # Shutdown: Clean up resources
     logger.info("🛑 Shutting down the API server...")
     hybrid_searcher = None
+    reranking_model = None
     logger.info("✅ Cleanup completed.")
 
 # Request models
@@ -89,8 +96,8 @@ class SearchRequest(BaseModel):
 # Create the FastAPI app
 app = FastAPI(
     title="Grid 7.0 Enhanced Semantic Search API",
-    description="An intelligent product search API with enhanced NER entity extraction and FAISS semantic search. Features newly trained NER model with comprehensive entity recognition.",
-    version="2.1.0",
+    description="An intelligent product search API with enhanced NER entity extraction, FAISS semantic search, and LightGBM reranking for optimal results.",
+    version="2.2.0",
     lifespan=lifespan
 )
 
@@ -124,12 +131,13 @@ def hybrid_search(request: SearchRequest):
 @app.post("/search/", response_model=List[Dict[str, Any]])
 async def search_endpoint(request: SearchRequest):
     """
-    Main search endpoint with semantic search integration.
+    Main search endpoint with complete pipeline: NER filtering, semantic search, and reranking.
     
-    This endpoint:
-    1. Performs hybrid search (NER + Semantic)
-    2. Extracts comprehensive features
-    3. Returns enriched results with all features
+    This endpoint implements the full search pipeline:
+    1. NER entity extraction and filtering
+    2. Semantic search using FAISS
+    3. Feature enrichment
+    4. LightGBM reranking for optimal results
     """
     try:
         logger.info(f"🔍 Search request: '{request.query}' (top {request.top_k})")
@@ -173,8 +181,25 @@ async def search_endpoint(request: SearchRequest):
         else:
             logger.warning("⚠️ Feature extractor not available - features may be incomplete")
         
+        # Step 3: Reranking (NEW STEP)
+        if reranking_model and search_results:
+            rerank_start = time.time()
+            logger.info("🎯 Applying LightGBM reranking to optimize results...")
+            
+            reranked_results = reranking_model.rerank_results(search_results)
+            rerank_time = time.time() - rerank_start
+            
+            logger.info(f"✅ Reranking completed in {rerank_time:.3f}s")
+            logger.info(f"🎯 Reranked {len(reranked_results)} products for optimal relevance")
+            
+            # Update final results with reranked ones
+            search_results = reranked_results
+        else:
+            logger.warning("⚠️ Reranking model not available - returning original results")
+        
         total_time = time.time() - start_time
         logger.info(f"⚡ Total processing time: {total_time:.3f}s")
+        logger.info(f"📊 Final pipeline: NER → Semantic Search → Feature Enrichment → Reranking")
         
         return search_results
         
@@ -186,28 +211,31 @@ async def search_endpoint(request: SearchRequest):
 @app.get("/health/")
 def health_check():
     """Enhanced health check endpoint."""
-    global hybrid_searcher
+    global hybrid_searcher, reranking_model
     
     hybrid_status = "loaded" if hybrid_searcher is not None else "not_loaded"
+    reranking_status = "loaded" if reranking_model is not None else "not_loaded"
     
     return {
         "status": "ok" if hybrid_searcher is not None else "degraded",
         "semantic_search_status": hybrid_status,
+        "reranking_status": reranking_status,
         "message": "API is running and ready to serve requests",
         "capabilities": {
-            "semantic_search": hybrid_status == "loaded"
+            "semantic_search": hybrid_status == "loaded",
+            "reranking": reranking_status == "loaded"
         }
     }
 
 @app.get("/stats/")
 def get_system_stats():
     """Get detailed information about the loaded models and systems."""
-    global hybrid_searcher
+    global hybrid_searcher, reranking_model
     
     if hybrid_searcher is None:
         return {
             "status": "not_loaded",
-            "message": "Semantic search system is not loaded",
+            "message": "Search systems are not loaded",
             "models": {}
         }
     
@@ -223,6 +251,11 @@ def get_system_stats():
                 "has_faiss_index": hybrid_searcher.faiss_index is not None,
                 "has_sbert_model": hybrid_searcher.sbert_model is not None,
                 "has_product_catalog": hybrid_searcher.product_catalog is not None
+            },
+            "reranking_model": {
+                "status": "loaded" if reranking_model is not None else "not_loaded",
+                "model_available": reranking_model is not None,
+                "model_path": RERANKING_MODEL_PATH if reranking_model else None
             }
         }
     }
@@ -237,9 +270,10 @@ def get_system_stats():
 def root():
     """Root endpoint with API information."""
     return {
-        "message": "Grid 7.0 Semantic Search API",
-        "version": "2.0.0",
-        "description": "Intelligent product search combining NER and semantic search",
+        "message": "Grid 7.0 Semantic Search API with Reranking",
+        "version": "2.2.0",
+        "description": "Intelligent product search combining NER, semantic search, and LightGBM reranking",
+        "pipeline": "NER Filtering → Semantic Search → Feature Enrichment → Reranking",
         "endpoints": {
             "search": "/search/",
             "hybrid_search": "/hybrid_search/",
