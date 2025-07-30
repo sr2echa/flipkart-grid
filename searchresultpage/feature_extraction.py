@@ -254,9 +254,16 @@ class FeatureExtractor:
         
         logger.info(f"🔧 Extracting features for {len(products)} products")
         
-        # Get user profile
+        # Get user profile - prioritize persona_tag from user context
         user_id = user_context.get('user_id', 'default_user') if user_context else 'default_user'
         user_profile = self.user_profiles.get(user_id, self._get_default_user_profile())
+        
+        # Override persona_tag with user context if provided
+        if user_context and 'persona_tag' in user_context:
+            user_profile['persona_tag'] = user_context['persona_tag']
+            logger.info(f"🎭 Using persona_tag from user context: {user_context['persona_tag']}")
+        else:
+            logger.info(f"🎭 Using default persona_tag: {user_profile['persona_tag']}")
         
         enriched_products = []
         
