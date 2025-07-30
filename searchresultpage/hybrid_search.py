@@ -473,7 +473,7 @@ class HybridSearcher:
     
     def search(self, query: str, top_k: int = 100, user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
-        Main hybrid search function that prioritizes semantic search.
+        Main hybrid search function that prioritizes semantic search with optional feature enrichment.
         
         Args:
             query: Search query string
@@ -489,27 +489,50 @@ class HybridSearcher:
         logger.info(f"🚀 Starting semantic search for: '{query}' (top {top_k})")
         start_time = time.time()
         
-        # Step A: Extract entities using spaCy NER (for logging only)
+        # Step A: Extract price constraints first (fast operation)
+        price_constraints = self._extract_price_constraints(query)
+        if price_constraints:
+            logger.info(f"💰 Price constraints detected: {price_constraints}")
+        
+        # Step B: Extract entities using spaCy NER (for logging only)
         entities = self.extract_entities(query)
         if entities:
             logger.info(f"ℹ️ Entities detected (for reference): {entities}")
         
-        # Step B: Use semantic search as primary method
+        # Step C: Use semantic search as primary method
         logger.info("🔍 Using semantic search as primary method")
         results = self._semantic_search(query, top_k)
         
-        # Step C: Enrich with comprehensive features
-        if self.feature_extractor:
-            logger.info("🔧 Enriching products with comprehensive features...")
-            results = self.feature_extractor.extract_features_for_products(
-                results, query, user_context
+        # Step D: Apply price filtering if constraints found
+        if price_constraints and results:
+            logger.info("💰 Applying price filtering...")
+            filtered_results = self._filter_by_price(results, price_constraints)
+            if filtered_results:
+                results = filtered_results
+                logger.info(f"✅ Price filtering applied: {len(results)} results remain")
+            else:
+                logger.warning("⚠️ No results match price constraints")
+        
+        # Step E: Enrich with features only if needed (performance optimization)
+        if self.feature_extractor and len(results) > 0:
+            # Only enrich if we have results and feature extraction is enabled
+            logger.info("🔧 Enriching products with essential features...")
+            
+            # Limit feature extraction to top results for performance
+            top_results = results[:min(20, len(results))]  # Only enrich top 20 results
+            
+            enriched_results = self.feature_extractor.extract_features_for_products(
+                top_results, query, user_context
             )
             
-            # Validate that all required features are present
-            if not self.feature_extractor.validate_features(results):
+            # Validate that essential features are present
+            if not self.feature_extractor.validate_features(enriched_results):
                 logger.warning("⚠️ Some products are missing required features")
+            
+            # Replace top results with enriched ones
+            results[:len(enriched_results)] = enriched_results
         else:
-            logger.warning("⚠️ Feature extractor not available - using basic features only")
+            logger.info("⚡ Skipping feature enrichment for performance")
         
         search_time = time.time() - start_time
         logger.info(f"⚡ Semantic search completed in {search_time:.3f}s - Found {len(results)} products")

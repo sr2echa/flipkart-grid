@@ -19,9 +19,11 @@
   "labels":{
     "ner":[
       "BRAND",
+      "CATEGORY",
       "COLOR",
       "FEATURE",
-      "PRICE",
+      "MATERIAL",
+      "PRICE_INDICATOR",
       "PRODUCT",
       "SIZE"
     ]

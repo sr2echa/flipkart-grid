@@ -20,6 +20,7 @@ import traceback
 
 # Import the hybrid searcher for semantic search
 from hybrid_search import HybridSearcher
+# from reranking_model import RerankingModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Global variables for loaded models
 hybrid_searcher = None
+# reranking_model = None
 
 # Configuration paths
 SPACY_MODEL_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\searchresultpage\\spacy_ner_model"
@@ -86,9 +88,9 @@ class SearchRequest(BaseModel):
 
 # Create the FastAPI app
 app = FastAPI(
-    title="Grid 7.0 Semantic Search API",
-    description="An intelligent product search API combining spaCy NER entity extraction with FAISS semantic search.",
-    version="2.0.0",
+    title="Grid 7.0 Enhanced Semantic Search API",
+    description="An intelligent product search API with enhanced NER entity extraction and FAISS semantic search. Features newly trained NER model with comprehensive entity recognition.",
+    version="2.1.0",
     lifespan=lifespan
 )
 
