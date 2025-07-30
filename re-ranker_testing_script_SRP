@@ -1,0 +1,330 @@
+import pandas as pd
+import lightgbm as lgb
+
+# Feature columns expected by your model
+FEATURE_COLUMNS = [
+    'persona_tag', 'avg_price_last_k_clicks', 'preferred_brands_count',
+    'session_length', 'query_frequency', 'brand', 'price', 'rating',
+    'click_count', 'is_f_assured', 'brand_match', 'price_gap_to_avg',
+    'offer_preference_match', 'event', 'brand_lover'
+]
+
+def prepare_features(df):
+    # Factorize categorical columns exactly as training
+    for col in ['persona_tag', 'brand', 'event']:
+        if col in df.columns:
+            df[col], _ = pd.factorize(df[col])
+        else:
+            df[col] = 0
+
+    # Convert numeric features, fill NaNs with 0
+    numeric_cols = [
+        'avg_price_last_k_clicks', 'preferred_brands_count', 'session_length',
+        'query_frequency', 'price', 'rating', 'click_count',
+        'brand_match', 'price_gap_to_avg', 'offer_preference_match'
+    ]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        else:
+            df[col] = 0
+
+    # Derive brand_lover from brand_match (1 if brand_match ==1 else 0)
+    if 'brand_match' in df.columns:
+        df['brand_lover'] = df['brand_match'].apply(lambda x: 1 if x == 1 else 0)
+    else:
+        df['brand_lover'] = 0
+
+    # Convert boolean to int
+    if 'is_f_assured' in df.columns:
+        df['is_f_assured'] = df['is_f_assured'].astype(int)
+    else:
+        df['is_f_assured'] = 0
+
+    return df
+
+# Example top products JSON (corrected booleans, add full 100 as needed)
+top_products_json = [
+    {
+        "rank": 1,
+        "product_id": "P10924",
+        "title": "Samsung Galaxy A54",
+        "brand": "Samsung",
+        "category": "Electronics",
+        "price": 83726.59,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5458,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5458,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.4457553,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 2,
+        "product_id": "P14982",
+        "title": "Samsung Galaxy A54",
+        "brand": "Samsung",
+        "category": "Electronics",
+        "price": 122703.3,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.528,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.528,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.5,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 3,
+        "product_id": "P10566",
+        "title": "Samsung Galaxy S24",
+        "brand": "Samsung",
+        "category": "Electronics",
+        "price": 112912.46,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5219,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5219,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.5,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 4,
+        "product_id": "P14473",
+        "title": "Samsung Galaxy M14",
+        "brand": "Samsung",
+        "category": "Electronics",
+        "price": 75628.17,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5178,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5178,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.41876056666666667,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 5,
+        "product_id": "P10273",
+        "title": "Xiaomi Redmi Note 12",
+        "brand": "Xiaomi",
+        "category": "Electronics",
+        "price": 28970.4,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.516,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 0.0,
+        "price_gap_to_avg": 0.15881600000000007,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.516,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.2632346666666667,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 6,
+        "product_id": "P13958",
+        "title": "Oppo A78",
+        "brand": "Oppo",
+        "category": "Electronics",
+        "price": 39899.13,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5159,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 0.0,
+        "price_gap_to_avg": 0.5959651999999999,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5159,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.29966376666666666,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 7,
+        "product_id": "P13305",
+        "title": "Apple iPhone 14",
+        "brand": "Apple",
+        "category": "Electronics",
+        "price": 67193.92,
+        "rating": 0.0,
+        "is_f_assured": False,
+        "similarity_score": 0.5145,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 1.6877567999999998,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5145,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.3906464,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 8,
+        "product_id": "P14213",
+        "title": "LG NanoCell 50\"",
+        "brand": "LG",
+        "category": "Electronics",
+        "price": 250047.0,
+        "rating": 0.0,
+        "is_f_assured": False,
+        "similarity_score": 0.5125,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 0.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5125,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.5,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 9,
+        "product_id": "P11502",
+        "title": "LG NanoCell 50\"",
+        "brand": "LG",
+        "category": "Electronics",
+        "price": 251104.61,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5114,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 0.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5114,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.5,
+        "event": "general",
+        "click_count": 0
+    },
+    {
+        "rank": 10,
+        "product_id": "P14599",
+        "title": "Samsung Galaxy A54",
+        "brand": "Samsung",
+        "category": "Electronics",
+        "price": 133203.44,
+        "rating": 0.0,
+        "is_f_assured": True,
+        "similarity_score": 0.5097,
+        "search_method": "semantic_search",
+        "persona_tag": "general_shopper",
+        "avg_price_last_k_clicks": 25000.0,
+        "preferred_brands_count": 3,
+        "session_length": 5,
+        "query_frequency": 10,
+        "brand_match": 1.0,
+        "price_gap_to_avg": 2.0,
+        "offer_preference_match": 0.5,
+        "semantic_similarity": 0.5097,
+        "query_intent_similarity": 0.0,
+        "product_embedding_mean": 0.5,
+        "event": "general",
+        "click_count": 0
+    }
+]
+
+
+# Path to your trained LightGBM model file
+model_path = "lgbm_rerank_model_with_label_fix.txt"
+
+# Load the model
+model = lgb.Booster(model_file=model_path)
+
+# Convert the JSON list to Pandas DataFrame
+df_candidates = pd.DataFrame(top_products_json)
+
+# Prepare features as per model expectations
+df_features = prepare_features(df_candidates)
+
+# Check for missing features in candidate DataFrame
+missing_features = [col for col in FEATURE_COLUMNS if col not in df_features.columns]
+if missing_features:
+    raise ValueError(f"Missing required feature columns for prediction: {missing_features}")
+
+# Select model feature columns
+X = df_features[FEATURE_COLUMNS]
+
+# Predict relevance scores
+df_features['relevance_score'] = model.predict(X)
+
+# Re-rank by descending predicted relevance score
+df_ranked = df_features.sort_values('relevance_score', ascending=False).reset_index(drop=True)
+
+# Print top 10 ranked products with relevant info
+print("\nTop 10 Re-ranked Products:")
+print(df_ranked[['product_id', 'title', 'brand', 'price', 'relevance_score'] + 
+                [col for col in FEATURE_COLUMNS if col in df_ranked.columns]].head(10).to_string(index=False))
