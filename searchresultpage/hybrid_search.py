@@ -54,8 +54,8 @@ def check_dependencies():
 
 class HybridSearcher:
     """
-    Hybrid search system that combines spaCy NER entity extraction 
-    with FAISS semantic search for optimal product discovery.
+    Semantic search system that uses FAISS for optimal product discovery.
+    Now primarily uses semantic search for better results.
     """
     
     def __init__(self, 
@@ -84,7 +84,7 @@ class HybridSearcher:
         self.stats = None
         self.model_name = 'all-MiniLM-L6-v2'
         
-        logger.info("🔧 Grid 7.0 - Hybrid Search System Initializing")
+        logger.info("🔧 Grid 7.0 - Semantic Search System Initializing")
         logger.info("=" * 60)
         
         if not check_dependencies():
@@ -159,11 +159,27 @@ class HybridSearcher:
         else:
             logger.info("ℹ️ No product catalog provided - rule-based filtering disabled")
     
+    def _load_feature_extractor(self):
+        """Load the feature extraction system."""
+        logger.info("🔧 Loading Feature Extractor...")
+        try:
+            from feature_extraction import FeatureExtractor
+            self.feature_extractor = FeatureExtractor(
+                session_log_path="R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\session_log.csv",
+                user_queries_path="R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\user_queries.csv",
+                realtime_data_path="R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\realtime_product_info.csv"
+            )
+            logger.info("✅ Feature Extractor loaded successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to load Feature Extractor: {e}")
+            self.feature_extractor = None
+    
     def _load_all_components(self):
         """Load all components: spaCy NER, FAISS, and product catalog."""
         self._load_spacy_model()
         self._load_faiss_components()
         self._load_product_catalog()
+        self._load_feature_extractor()
     
     def extract_entities(self, text: str) -> Dict[str, List[str]]:
         """Extract entities from text using spaCy NER model."""
@@ -177,12 +193,46 @@ class HybridSearcher:
         
         return entities
     
+    def _enhance_entities_with_categories(self, text: str, entities: Dict[str, List[str]]) -> Dict[str, List[str]]:
+        """
+        Enhance entity extraction by detecting category-like terms that the NER model might miss.
+        """
+        category_keywords = {
+            'clothing': ['clothing', 'apparel', 'fashion', 'wear', 'dress', 'shirt', 'pants', 'jeans', 't-shirt', 'tshirt'],
+            'footwear': ['shoes', 'footwear', 'sneakers', 'boots', 'sandals', 'flip-flops'],
+            'electronics': ['electronics', 'mobile', 'phone', 'smartphone', 'laptop', 'computer', 'tv', 'television'],
+            'accessories': ['accessories', 'jewelry', 'watch', 'bag', 'wallet', 'belt'],
+            'sports': ['sports', 'fitness', 'gym', 'exercise', 'athletic'],
+            'home': ['home', 'kitchen', 'furniture', 'decor', 'appliances'],
+            'beauty': ['beauty', 'cosmetics', 'makeup', 'skincare', 'personal care'],
+            'books': ['books', 'stationery', 'pens', 'pencils', 'notebooks'],
+            'toys': ['toys', 'games', 'puzzles', 'educational'],
+            'automotive': ['automotive', 'car', 'bike', 'vehicle', 'accessories']
+        }
+        
+        text_lower = text.lower()
+        enhanced_entities = entities.copy()
+        
+        # Check for category keywords in the text
+        for category, keywords in category_keywords.items():
+            for keyword in keywords:
+                if keyword in text_lower:
+                    # If this keyword wasn't already extracted as an entity
+                    if not any(keyword in entity.lower() for entity_list in entities.values() for entity in entity_list):
+                        if 'CATEGORY' not in enhanced_entities:
+                            enhanced_entities['CATEGORY'] = []
+                        enhanced_entities['CATEGORY'].append(category)
+                        logger.info(f"🎯 Enhanced entity extraction: detected '{category}' as CATEGORY")
+                        break
+        
+        return enhanced_entities
+    
     def _filter_by_entities(self, entities: Dict[str, List[str]], top_k: int = 100) -> List[Dict[str, Any]]:
         """
         Filter products using extracted entities (rule-based approach).
         This is a simplified implementation - customize based on your catalog structure.
         """
-        if not self.product_catalog is not None:
+        if self.product_catalog is None:
             logger.warning("⚠️ Product catalog not available for rule-based filtering")
             return []
         
@@ -205,6 +255,35 @@ class HybridSearcher:
             color_filter = filtered_products['title'].str.lower().str.contains('|'.join(colors), na=False)
             filtered_products = filtered_products[color_filter]
         
+        # Handle FEATURE entities that might actually be categories
+        if 'FEATURE' in entities:
+            features = [feature.lower() for feature in entities['FEATURE']]
+            
+            # Check if any features match category terms
+            category_keywords = ['clothing', 'apparel', 'fashion', 'wear', 'dress', 'shirt', 'pants', 'jeans', 'shoes', 'footwear', 'accessories', 'electronics', 'mobile', 'laptop', 'tv', 'headphones', 'speakers', 'camera', 'gaming', 'sports', 'fitness', 'home', 'kitchen', 'beauty', 'health', 'books', 'toys', 'automotive']
+            
+            category_matches = []
+            feature_matches = []
+            
+            for feature in features:
+                if feature in category_keywords:
+                    category_matches.append(feature)
+                else:
+                    feature_matches.append(feature)
+            
+            # Apply category filtering if category matches found
+            if category_matches and 'category' in filtered_products.columns:
+                category_filter = filtered_products['category'].str.lower().str.contains('|'.join(category_matches), na=False)
+                filtered_products = filtered_products[category_filter]
+                logger.info(f"🎯 Applied category filtering for: {category_matches}")
+            
+            # Apply feature filtering for remaining features
+            if feature_matches:
+                feature_filter = filtered_products['title'].str.lower().str.contains('|'.join(feature_matches), na=False)
+                filtered_products = filtered_products[feature_filter]
+                logger.info(f"🔧 Applied feature filtering for: {feature_matches}")
+        
+        # Handle CATEGORY entities (in case model is retrained later)
         if 'CATEGORY' in entities:
             categories = [cat.lower() for cat in entities['CATEGORY']]
             if 'category' in filtered_products.columns:
@@ -234,16 +313,130 @@ class HybridSearcher:
         logger.info(f"📋 Rule-based filtering found {len(results)} products")
         return results
     
+    def _extract_price_constraints(self, query: str) -> Dict[str, Any]:
+        """
+        Extract price constraints from the query.
+        Returns dict with 'min_price', 'max_price', 'price_type' (under/over/between)
+        """
+        import re
+        
+        query_lower = query.lower()
+        price_constraints = {}
+        
+        # Patterns for price extraction
+        patterns = [
+            r'under\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # under 10000
+            r'below\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # below 10000
+            r'less\s+than\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # less than 10000
+            r'over\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # over 10000
+            r'above\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # above 10000
+            r'more\s+than\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # more than 10000
+            r'between\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:and|to)\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # between 5000 and 10000
+            r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:to|-)\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # 5000 to 10000
+            r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)',  # 10000 rs
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, query_lower)
+            if matches:
+                if len(matches[0]) == 1:  # Single price (under/over)
+                    price = float(matches[0][0].replace(',', ''))
+                    if 'under' in pattern or 'below' in pattern or 'less than' in pattern:
+                        price_constraints = {'max_price': price, 'price_type': 'under'}
+                    else:
+                        price_constraints = {'min_price': price, 'price_type': 'over'}
+                    break
+                elif len(matches[0]) == 2:  # Range (between)
+                    min_price = float(matches[0][0].replace(',', ''))
+                    max_price = float(matches[0][1].replace(',', ''))
+                    price_constraints = {'min_price': min_price, 'max_price': max_price, 'price_type': 'between'}
+                    break
+        
+        if price_constraints:
+            logger.info(f"💰 Extracted price constraints: {price_constraints}")
+        
+        return price_constraints
+    
+    def _enhance_query_for_semantic_search(self, query: str) -> str:
+        """
+        Enhance query with additional keywords for better semantic search results.
+        """
+        query_lower = query.lower()
+        enhanced_query = query
+        
+        # Add mobile phone related keywords if query mentions mobile/phone
+        if any(word in query_lower for word in ['mobile', 'phone', 'smartphone']):
+            if 'children' in query_lower or 'kids' in query_lower or 'child' in query_lower:
+                enhanced_query += " affordable budget cheap redmi xiaomi poco"
+            else:
+                enhanced_query += " smartphone mobile phone"
+        
+        # Add price-related keywords if price constraint is mentioned
+        if any(word in query_lower for word in ['under', 'below', 'less than', 'cheap', 'budget', 'affordable']):
+            enhanced_query += " affordable budget cheap low price"
+        
+        # Add brand keywords for better matching
+        if 'redmi' in query_lower:
+            enhanced_query += " xiaomi redmi"
+        elif 'samsung' in query_lower:
+            enhanced_query += " samsung galaxy"
+        elif 'apple' in query_lower or 'iphone' in query_lower:
+            enhanced_query += " apple iphone"
+        
+        if enhanced_query != query:
+            logger.info(f"🔍 Enhanced query: '{query}' -> '{enhanced_query}'")
+        
+        return enhanced_query
+    
+    def _filter_by_price(self, results: List[Dict[str, Any]], price_constraints: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Filter results based on price constraints."""
+        if not price_constraints:
+            return results
+        
+        filtered_results = []
+        for result in results:
+            price = result.get('price', 0)
+            if isinstance(price, str):
+                try:
+                    price = float(price.replace(',', '').replace('₹', '').strip())
+                except:
+                    price = 0
+            
+            # Apply price filtering
+            if price_constraints.get('price_type') == 'under':
+                max_price = price_constraints.get('max_price', float('inf'))
+                if price <= max_price:
+                    filtered_results.append(result)
+            elif price_constraints.get('price_type') == 'over':
+                min_price = price_constraints.get('min_price', 0)
+                if price >= min_price:
+                    filtered_results.append(result)
+            elif price_constraints.get('price_type') == 'between':
+                min_price = price_constraints.get('min_price', 0)
+                max_price = price_constraints.get('max_price', float('inf'))
+                if min_price <= price <= max_price:
+                    filtered_results.append(result)
+        
+        logger.info(f"💰 Price filtering: {len(results)} -> {len(filtered_results)} products")
+        return filtered_results
+    
     def _semantic_search(self, query: str, top_k: int = 100) -> List[Dict[str, Any]]:
-        """Perform semantic search using FAISS."""
+        """Perform semantic search using FAISS with price filtering."""
         if not self.faiss_index or not self.sbert_model:
             raise RuntimeError("FAISS components not loaded")
         
         logger.info(f"🔍 Performing semantic search for: '{query}'")
         
-        # Encode query and search FAISS
-        query_embedding = self.sbert_model.encode([query.strip()], normalize_embeddings=True)
-        distances, indices = self.faiss_index.search(query_embedding.astype('float32'), top_k)
+        # Extract price constraints from query
+        price_constraints = self._extract_price_constraints(query)
+        
+        # Enhance query for better semantic search
+        enhanced_query = self._enhance_query_for_semantic_search(query)
+        
+        # Encode enhanced query and search FAISS (search more to account for filtering)
+        search_k = top_k * 3 if price_constraints else top_k  # Search more if we need to filter
+        query_embedding = self.sbert_model.encode([enhanced_query.strip()], normalize_embeddings=True)
+        distances, indices = self.faiss_index.search(query_embedding.astype('float32'), search_k)
         
         # Prepare results
         results = []
@@ -268,58 +461,58 @@ class HybridSearcher:
                 'search_method': 'semantic_search'
             })
         
+        # Apply price filtering if constraints found
+        if price_constraints:
+            results = self._filter_by_price(results, price_constraints)
+        
+        # Limit to top_k results
+        results = results[:top_k]
+        
         logger.info(f"📋 Semantic search found {len(results)} products")
         return results
     
-    def search(self, query: str, top_k: int = 100) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 100, user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
-        Main hybrid search function that combines NER and semantic search.
+        Main hybrid search function that prioritizes semantic search.
         
         Args:
             query: Search query string
             top_k: Number of results to return
+            user_context: User context for feature enrichment
             
         Returns:
-            List of product results with metadata
+            List of product results with comprehensive features
         """
         if not query or not query.strip():
             raise ValueError("Search query cannot be empty")
         
-        logger.info(f"🚀 Starting hybrid search for: '{query}' (top {top_k})")
+        logger.info(f"🚀 Starting semantic search for: '{query}' (top {top_k})")
         start_time = time.time()
         
-        # Step A: Extract entities using spaCy NER
+        # Step A: Extract entities using spaCy NER (for logging only)
         entities = self.extract_entities(query)
-        
-        # Step B: Conditional search based on entity extraction
         if entities:
-            # Entities found - use rule-based filtering
-            logger.info(f"✅ Entities detected: {entities}")
-            results = self._filter_by_entities(entities, top_k)
+            logger.info(f"ℹ️ Entities detected (for reference): {entities}")
+        
+        # Step B: Use semantic search as primary method
+        logger.info("🔍 Using semantic search as primary method")
+        results = self._semantic_search(query, top_k)
+        
+        # Step C: Enrich with comprehensive features
+        if self.feature_extractor:
+            logger.info("🔧 Enriching products with comprehensive features...")
+            results = self.feature_extractor.extract_features_for_products(
+                results, query, user_context
+            )
             
-            # If rule-based filtering didn't find enough results, fall back to semantic search
-            if len(results) < min(10, top_k):  # Minimum threshold
-                logger.info(f"⚠️ Rule-based filtering found only {len(results)} products, falling back to semantic search")
-                semantic_results = self._semantic_search(query, top_k)
-                # Combine results (rule-based first, then semantic)
-                combined_results = results + semantic_results
-                # Remove duplicates and limit to top_k
-                seen_ids = set()
-                final_results = []
-                for result in combined_results:
-                    if result['product_id'] not in seen_ids:
-                        seen_ids.add(result['product_id'])
-                        final_results.append(result)
-                        if len(final_results) >= top_k:
-                            break
-                results = final_results
+            # Validate that all required features are present
+            if not self.feature_extractor.validate_features(results):
+                logger.warning("⚠️ Some products are missing required features")
         else:
-            # No entities found - use semantic search
-            logger.info("ℹ️ No entities detected, using semantic search")
-            results = self._semantic_search(query, top_k)
+            logger.warning("⚠️ Feature extractor not available - using basic features only")
         
         search_time = time.time() - start_time
-        logger.info(f"⚡ Hybrid search completed in {search_time:.3f}s - Found {len(results)} products")
+        logger.info(f"⚡ Semantic search completed in {search_time:.3f}s - Found {len(results)} products")
         
         return results
 
@@ -331,7 +524,7 @@ def main():
     # Configuration
     SPACY_MODEL_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\searchresultpage\\spacy_ner_model"
     FAISS_INDEX_DIR = "./faiss_index"
-    PRODUCT_CATALOG_PATH = None  # Add path to your product catalog CSV if available
+    PRODUCT_CATALOG_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\product_catalog_merged.csv"
     
     try:
         # Initialize hybrid searcher

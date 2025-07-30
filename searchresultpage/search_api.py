@@ -15,6 +15,8 @@ from typing import List, Dict, Any
 import logging
 import os
 from contextlib import asynccontextmanager
+import time
+import traceback
 
 # Import the hybrid searcher and existing components
 from hybrid_search import HybridSearcher
@@ -24,7 +26,7 @@ from process_and_rank import ProductRanker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global variables to store instances
+# Global variables for loaded models
 hybrid_searcher = None
 product_ranker = None
 
@@ -32,7 +34,7 @@ product_ranker = None
 SPACY_MODEL_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\searchresultpage\\spacy_ner_model"
 FAISS_INDEX_DIR = "./faiss_index"
 REALTIME_DATA_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\realtime_product_info.csv"
-PRODUCT_CATALOG_PATH = None  # Add your product catalog path if available
+PRODUCT_CATALOG_PATH = "R:\\sem VII\\Flipkart Grid 7.0\\flipkart-grid\\dataset\\product_catalog_merged.csv"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -132,35 +134,74 @@ def hybrid_search(request: SearchRequest):
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}")
 
 @app.post("/search/", response_model=List[Dict[str, Any]])
-def search(request: SearchRequest):
+async def search_endpoint(request: SearchRequest):
     """
-    Main search endpoint that performs hybrid search with ranking.
+    Main search endpoint with end-to-end integration.
     
     This endpoint:
-    1. Uses hybrid search (spaCy NER + FAISS semantic search)
-    2. Enriches and re-ranks results using ProductRanker with context
-    3. Returns the final ranked list of products
+    1. Performs hybrid search (NER + Semantic)
+    2. Extracts comprehensive features (17 required features)
+    3. Applies real-time ranking
+    4. Returns enriched results with all features
     """
-    global hybrid_searcher, product_ranker
-    
-    if hybrid_searcher is None:
-        raise HTTPException(status_code=503, detail="Hybrid search system is not loaded. Please try again later.")
-    if product_ranker is None:
-        raise HTTPException(status_code=503, detail="ProductRanker is not initialized. Please try again later.")
-    
     try:
-        # Get candidates using hybrid search
-        candidates = hybrid_searcher.search(query=request.query, top_k=request.top_k)
+        logger.info(f"🔍 Search request: '{request.query}' (top {request.top_k})")
         
-        # Enrich and re-rank using ProductRanker
-        ranked_results = product_ranker.rank_products(candidates, request.context)
+        if hybrid_searcher is None:
+            logger.warning("⚠️ Search system not available - returning fallback response")
+            return [{
+                'product_id': 'fallback_1',
+                'title': 'System temporarily unavailable',
+                'brand': 'System',
+                'category': 'Service',
+                'price': 0,
+                'rating': 0,
+                'is_f_assured': False,
+                'search_method': 'fallback',
+                'message': 'Search system is initializing. Please try again in a moment.'
+            }]
         
-        logger.info(f"🔍 Processed search query: '{request.query}' - Found {len(ranked_results)} ranked results")
-        return ranked_results
+        # Step 1: Hybrid Search with Feature Enrichment
+        start_time = time.time()
+        search_results = hybrid_searcher.search(
+            query=request.query,
+            top_k=request.top_k,
+            user_context=request.context
+        )
+        search_time = time.time() - start_time
+        
+        logger.info(f"✅ Search completed in {search_time:.3f}s - Found {len(search_results)} products")
+        
+        # Step 2: Additional Ranking (if available)
+        if product_ranker and search_results:
+            rank_start = time.time()
+            search_results = product_ranker.rank_products(search_results, request.context)
+            rank_time = time.time() - rank_start
+            logger.info(f"📊 Ranking completed in {rank_time:.3f}s")
+        
+        # Step 3: Validate features
+        if hybrid_searcher and hybrid_searcher.feature_extractor and search_results:
+            validation_start = time.time()
+            is_valid = hybrid_searcher.feature_extractor.validate_features(search_results)
+            validation_time = time.time() - validation_start
+            
+            if is_valid:
+                logger.info(f"✅ Feature validation passed in {validation_time:.3f}s")
+                logger.info(f"✅ All {len(search_results)} products contain required features")
+            else:
+                logger.warning(f"⚠️ Feature validation failed in {validation_time:.3f}s")
+        else:
+            logger.warning("⚠️ Feature extractor not available - features may be incomplete")
+        
+        total_time = time.time() - start_time
+        logger.info(f"⚡ Total processing time: {total_time:.3f}s")
+        
+        return search_results
         
     except Exception as e:
-        logger.error(f"❌ Error in search: {e}")
-        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+        logger.error(f"❌ Search error: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 @app.get("/health/")
 def health_check():
