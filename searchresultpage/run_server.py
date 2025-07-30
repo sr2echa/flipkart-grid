@@ -43,11 +43,11 @@ def check_required_files():
 
 def run_production_server(host="127.0.0.1", port=8000):
     """Run the server in production mode."""
-    print("🚀 Starting Grid 7.0 Hybrid Search API in Production Mode")
+    print("🚀 Starting Grid 7.0 Semantic Search API in Production Mode")
     print("=" * 70)
     print("✅ Auto-reload is DISABLED - All models will stay in memory")
     print("✅ Optimized for consistent performance")
-    print("🧠 Loading: spaCy NER + FAISS Semantic Search + ProductRanker")
+    print("🧠 Loading: spaCy NER + FAISS Semantic Search")
     print("=" * 70)
     
     # Check required files
@@ -69,11 +69,11 @@ def run_production_server(host="127.0.0.1", port=8000):
 
 def run_development_server(host="127.0.0.1", port=8000):
     """Run the server in development mode with auto-reload."""
-    print("🛠️ Starting Grid 7.0 Hybrid Search API in Development Mode")
+    print("🛠️ Starting Grid 7.0 Semantic Search API in Development Mode")
     print("=" * 70)
     print("⚠️ Auto-reload is ENABLED - Models may reload on file changes")
     print("⚠️ Use production mode for consistent performance")
-    print("🧠 Loading: spaCy NER + FAISS Semantic Search + ProductRanker")
+    print("🧠 Loading: spaCy NER + FAISS Semantic Search")
     print("=" * 70)
     
     # Check required files
