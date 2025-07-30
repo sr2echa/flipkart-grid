@@ -1,0 +1,144 @@
+import pandas as pd
+import numpy as np
+import lightgbm as lgb
+import warnings
+
+warnings.filterwarnings('ignore')
+
+# Constants - update your dataset path and output model path here
+PATH_TRAINING_DATA = "/content/query_product_training_features_only.csv"  # Your CSV with feature data
+OUTPUT_MODEL_PATH = "lgbm_rerank_model_with_label_fix.txt"
+MAX_GROUP_SIZE = 10000
+
+FEATURE_COLUMNS = [
+    'persona_tag', 'avg_price_last_k_clicks', 'preferred_brands_count',
+    'session_length', 'query_frequency', 'brand', 'price', 'rating',
+    'click_count', 'is_f_assured', 'brand_match', 'price_gap_to_avg',
+    'offer_preference_match', 'event', 'brand_lover'
+]
+
+def prepare_features(df):
+    # Factorize categorical columns
+    for col in ['persona_tag', 'brand', 'event']:
+        if col in df.columns:
+            df[col], _ = pd.factorize(df[col])
+        else:
+            df[col] = 0
+
+    # Numeric columns - convert to float, fill NAs with 0
+    numeric_cols = [
+        'avg_price_last_k_clicks', 'preferred_brands_count', 'session_length',
+        'query_frequency', 'price', 'rating', 'click_count',
+        'brand_match', 'price_gap_to_avg', 'offer_preference_match',
+        'brand_lover'
+    ]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        else:
+            df[col] = 0
+
+    # Convert 'is_f_assured' to int (or 0 if missing)
+    if 'is_f_assured' in df.columns:
+        df['is_f_assured'] = df['is_f_assured'].astype(int)
+    else:
+        df['is_f_assured'] = 0
+
+    return df
+
+def assign_group_keys_with_limit(df, max_group_size=MAX_GROUP_SIZE):
+    new_keys = []
+    group_sizes = []
+
+    if 'query' not in df.columns:
+        # Split entire df into chunks of max_group_size
+        total = len(df)
+        num_splits = (total + max_group_size - 1) // max_group_size
+        for i in range(num_splits):
+            start_idx = i * max_group_size
+            end_idx = min((i + 1) * max_group_size, total)
+            size = end_idx - start_idx
+            new_keys.extend([f"all_{i}"] * size)
+            group_sizes.append(size)
+        return new_keys, group_sizes
+
+    # Otherwise group by 'query' and split large groups
+    for query, group in df.groupby('query'):
+        n = len(group)
+        if n <= max_group_size:
+            new_keys.extend([query] * n)
+            group_sizes.append(n)
+        else:
+            num_splits = (n + max_group_size - 1) // max_group_size
+            for i in range(num_splits):
+                split_group = group.iloc[i * max_group_size : (i + 1) * max_group_size]
+                new_keys.extend([f"{query}_{i}"] * len(split_group))
+                group_sizes.append(len(split_group))
+    return new_keys, group_sizes
+
+def train_ranking_model():
+    print("🔹 Loading dataset...")
+    try:
+        df = pd.read_csv(PATH_TRAINING_DATA)
+    except FileNotFoundError:
+        print(f"❌ File not found: {PATH_TRAINING_DATA}")
+        return
+
+    print(f"✅ Loaded: {len(df)} rows, {len(df.columns)} columns")
+
+    # Generate relevance_label from click_count if missing
+    if 'relevance_label' not in df.columns:
+        print("⚠ 'relevance_label' missing, generating from click_count...")
+        bins = [-1, 0, 2, 5, float('inf')]
+        labels = [0, 1, 2, 3]
+        df['relevance_label'] = pd.cut(df['click_count'], bins=bins, labels=labels).astype(int)
+    
+    df = prepare_features(df)
+
+    missing_features = [f for f in FEATURE_COLUMNS if f not in df.columns]
+    if missing_features:
+        print("❌ Missing features:", missing_features)
+        return
+
+    df['relevance_label'] = df['relevance_label'].astype(int)
+
+    # Assign group keys with chunking if no query column or splitting large groups
+    df['group_key'], groups = assign_group_keys_with_limit(df)
+
+    X = df[FEATURE_COLUMNS]
+    y = df['relevance_label'].astype(float)
+
+    print(f"🧪 Training with {len(X)} samples | Number of groups: {len(groups)}")
+
+    ranker = lgb.LGBMRanker(
+        objective='lambdarank',
+        metric='ndcg',
+        n_estimators=300,
+        learning_rate=0.05,
+        num_leaves=31,
+        random_state=42,
+        n_jobs=-1
+    )
+
+    ranker.fit(
+        X,
+        y,
+        group=groups,
+        eval_set=[(X, y)],
+        eval_group=[groups],
+        eval_at=[5],
+        callbacks=[lgb.early_stopping(10)]
+    )
+
+    ranker.booster_.save_model(OUTPUT_MODEL_PATH)
+    print(f"✅ Model saved to: {OUTPUT_MODEL_PATH}")
+
+    print("\n📊 Feature importances:")
+    fi = pd.DataFrame({
+        "feature": ranker.feature_name_,
+        "importance": ranker.feature_importances_
+    }).sort_values("importance", ascending=False)
+    print(fi)
+
+if _name_ == "_main_":
+    train_ranking_model()
