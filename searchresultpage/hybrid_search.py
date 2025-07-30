@@ -22,6 +22,7 @@ import spacy
 from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 import pandas as pd
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -311,113 +312,198 @@ class HybridSearcher:
             })
         
         logger.info(f"📋 Rule-based filtering found {len(results)} products")
+
+        # logger.info(f"Filtered products after NER: {filtered_products[['product_id', 'title', 'price']].head(10)}")
         return results
+
+    def _extract_product_price(self, product: Dict[str, Any]) -> Optional[float]:
+        """Enhanced price extraction from product data."""
+        # Try multiple price field names
+        price_fields = ['price', 'final_price', 'selling_price', 'mrp', 'cost', 'amount']
+        
+        for field in price_fields:
+            if field in product:
+                price_value = product[field]
+                
+                # Handle numeric prices
+                if isinstance(price_value, (int, float)):
+                    if price_value > 0:
+                        return float(price_value)
+                
+                # Handle string prices
+                elif isinstance(price_value, str) and price_value.strip():
+                    try:
+                        # Remove currency symbols and commas
+                        cleaned_price = re.sub(r'[₹,\s]', '', price_value.strip())
+                        cleaned_price = re.sub(r'rs\.?', '', cleaned_price, flags=re.IGNORECASE)
+                        
+                        if cleaned_price:
+                            price = float(cleaned_price)
+                            if price > 0:
+                                return price
+                    except (ValueError, TypeError):
+                        continue
+        
+        # Try to extract from title as last resort
+        title = product.get('title', '')
+        if title:
+            price_patterns = [
+                r'₹\s*(\d+(?:,\d{3})*(?:\.\d+)?)',
+                r'rs\.?\s*(\d+(?:,\d{3})*(?:\.\d+)?)',
+                r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*rs',
+            ]
+            
+            for pattern in price_patterns:
+                matches = re.findall(pattern, title.lower())
+                if matches:
+                    try:
+                        price = float(matches[0].replace(',', ''))
+                        if price > 0:
+                            return price
+                    except (ValueError, IndexError):
+                        continue
+        
+        return None
+
     
     def _extract_price_constraints(self, query: str) -> Dict[str, Any]:
         """
-        Extract price constraints from the query.
-        Returns dict with 'min_price', 'max_price', 'price_type' (under/over/between)
+        Enhanced price constraint extraction with better patterns and debugging.
         """
-        import re
+        query_lower = query.lower().strip()
+        logger.info(f"🔍 Extracting price constraints from: '{query_lower}'")
         
-        query_lower = query.lower()
-        price_constraints = {}
-        
-        # Patterns for price extraction
-        patterns = [
-            r'under\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # under 10000
-            r'below\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # below 10000
-            r'less\s+than\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # less than 10000
-            r'over\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # over 10000
-            r'above\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # above 10000
-            r'more\s+than\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # more than 10000
-            r'between\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:and|to)\s+(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # between 5000 and 10000
-            r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:to|-)\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)?',  # 5000 to 10000
-            r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:rs|rupees?|₹)',  # 10000 rs
+        # Improved regex patterns with better matching
+        price_patterns = [
+            # Under/Below patterns - more comprehensive
+            (r'under\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            (r'below\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            (r'less\s+than\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            (r'upto\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            (r'up\s+to\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            (r'within\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'under'),
+            
+            # Over/Above patterns
+            (r'over\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'over'),
+            (r'above\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'over'),
+            (r'more\s+than\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'over'),
+            
+            # Range patterns
+            (r'between\s+(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:and|to|-)\s*(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'range'),
+            (r'(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:to|-)\s*(?:rs\.?\s*|₹\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)', 'range'),
         ]
         
-        for pattern in patterns:
-            matches = re.findall(pattern, query_lower)
+        # Remove interfering words
+        query_cleaned = re.sub(r'\b(price|cost|budget|affordable|cheap)\b', '', query_lower)
+        
+        for pattern, constraint_type in price_patterns:
+            matches = re.findall(pattern, query_cleaned, re.IGNORECASE)
+            
             if matches:
-                if len(matches[0]) == 1:  # Single price (under/over)
-                    price = float(matches[0][0].replace(',', ''))
-                    if 'under' in pattern or 'below' in pattern or 'less than' in pattern:
-                        price_constraints = {'max_price': price, 'price_type': 'under'}
-                    else:
-                        price_constraints = {'min_price': price, 'price_type': 'over'}
-                    break
-                elif len(matches[0]) == 2:  # Range (between)
-                    min_price = float(matches[0][0].replace(',', ''))
-                    max_price = float(matches[0][1].replace(',', ''))
-                    price_constraints = {'min_price': min_price, 'max_price': max_price, 'price_type': 'between'}
-                    break
+                logger.info(f"🎯 Pattern matched: {constraint_type} -> {matches}")
+                
+                try:
+                    if constraint_type == 'under':
+                        price = float(matches[0].replace(',', ''))
+                        constraints = {'max_price': price, 'price_type': 'under'}
+                        logger.info(f"💰 Under constraint extracted: {constraints}")
+                        return constraints
+                    
+                    elif constraint_type == 'over':
+                        price = float(matches[0].replace(',', ''))
+                        constraints = {'min_price': price, 'price_type': 'over'}
+                        logger.info(f"💰 Over constraint extracted: {constraints}")
+                        return constraints
+                    
+                    elif constraint_type == 'range' and len(matches[0]) == 2:
+                        min_price = float(matches[0][0].replace(',', ''))
+                        max_price = float(matches[0][1].replace(',', ''))
+                        constraints = {
+                            'min_price': min_price, 
+                            'max_price': max_price, 
+                            'price_type': 'range'
+                        }
+                        logger.info(f"💰 Range constraint extracted: {constraints}")
+                        return constraints
+                
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"⚠️ Failed to parse price from matches {matches}: {e}")
+                    continue
         
-        if price_constraints:
-            logger.info(f"💰 Extracted price constraints: {price_constraints}")
-        
-        return price_constraints
-    
-    def _enhance_query_for_semantic_search(self, query: str) -> str:
-        """
-        Enhance query with additional keywords for better semantic search results.
-        """
-        query_lower = query.lower()
-        enhanced_query = query
-        
-        # Add mobile phone related keywords if query mentions mobile/phone
-        if any(word in query_lower for word in ['mobile', 'phone', 'smartphone']):
-            if 'children' in query_lower or 'kids' in query_lower or 'child' in query_lower:
-                enhanced_query += " affordable budget cheap redmi xiaomi poco"
-            else:
-                enhanced_query += " smartphone mobile phone"
-        
-        # Add price-related keywords if price constraint is mentioned
-        if any(word in query_lower for word in ['under', 'below', 'less than', 'cheap', 'budget', 'affordable']):
-            enhanced_query += " affordable budget cheap low price"
-        
-        # Add brand keywords for better matching
-        if 'redmi' in query_lower:
-            enhanced_query += " xiaomi redmi"
-        elif 'samsung' in query_lower:
-            enhanced_query += " samsung galaxy"
-        elif 'apple' in query_lower or 'iphone' in query_lower:
-            enhanced_query += " apple iphone"
-        
-        if enhanced_query != query:
-            logger.info(f"🔍 Enhanced query: '{query}' -> '{enhanced_query}'")
-        
-        return enhanced_query
+        logger.info("ℹ️ No price constraints found in query")
+        return {}
     
     def _filter_by_price(self, results: List[Dict[str, Any]], price_constraints: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Filter results based on price constraints."""
+        """Enhanced price filtering with better price extraction and debugging."""
         if not price_constraints:
+            logger.info("ℹ️ No price constraints to apply")
             return results
         
-        filtered_results = []
-        for result in results:
-            price = result.get('price', 0)
-            if isinstance(price, str):
-                try:
-                    price = float(price.replace(',', '').replace('₹', '').strip())
-                except:
-                    price = 0
-            
-            # Apply price filtering
-            if price_constraints.get('price_type') == 'under':
-                max_price = price_constraints.get('max_price', float('inf'))
-                if price <= max_price:
-                    filtered_results.append(result)
-            elif price_constraints.get('price_type') == 'over':
-                min_price = price_constraints.get('min_price', 0)
-                if price >= min_price:
-                    filtered_results.append(result)
-            elif price_constraints.get('price_type') == 'between':
-                min_price = price_constraints.get('min_price', 0)
-                max_price = price_constraints.get('max_price', float('inf'))
-                if min_price <= price <= max_price:
-                    filtered_results.append(result)
+        logger.info(f"💰 Applying price filter: {price_constraints}")
+        logger.info(f"📊 Starting with {len(results)} products")
         
-        logger.info(f"💰 Price filtering: {len(results)} -> {len(filtered_results)} products")
+        filtered_results = []
+        debug_info = []
+        
+        for i, result in enumerate(results):
+            # Enhanced price extraction
+            price = self._extract_product_price(result)
+            
+            if price is None or price <= 0:
+                debug_info.append(f"Product {i+1}: Invalid price - skipped")
+                continue
+            
+            # Apply filtering based on constraint type
+            constraint_type = price_constraints.get('price_type')
+            include_product = False
+            
+            if constraint_type == 'under':
+                max_price = price_constraints.get('max_price', float('inf'))
+                include_product = price <= max_price
+                debug_info.append(f"Product {i+1}: ₹{price} <= ₹{max_price} = {include_product}")
+            
+            elif constraint_type == 'over':
+                min_price = price_constraints.get('min_price', 0)
+                include_product = price >= min_price
+                debug_info.append(f"Product {i+1}: ₹{price} >= ₹{min_price} = {include_product}")
+            
+            elif constraint_type == 'range':
+                min_price = price_constraints.get('min_price', 0)
+                max_price = price_constraints.get('max_price', float('inf'))
+                include_product = min_price <= price <= max_price
+                debug_info.append(f"Product {i+1}: ₹{min_price} <= ₹{price} <= ₹{max_price} = {include_product}")
+            
+            if include_product:
+                # Add debugging info to result
+                result['original_price'] = result.get('price')
+                result['parsed_price'] = price
+                result['price_filter_applied'] = price_constraints
+                filtered_results.append(result)
+        
+        # Log first few comparisons for debugging
+        for info in debug_info[:10]:
+            logger.info(f"🔍 {info}")
+        
+        if len(debug_info) > 10:
+            logger.info(f"... and {len(debug_info) - 10} more products checked")
+        
+        logger.info(f"✅ Price filtering completed: {len(results)} -> {len(filtered_results)} products")
+        
+        # If no results, log sample prices for debugging
+        if len(filtered_results) == 0:
+            logger.warning("⚠️ No products matched the price criteria!")
+            sample_prices = []
+            for result in results[:5]:
+                price = self._extract_product_price(result)
+                title = result.get('title', 'Unknown')[:30]
+                if price:
+                    sample_prices.append(f"{title}: ₹{price}")
+            
+            if sample_prices:
+                logger.info("📊 Sample prices from original results:")
+                for sample in sample_prices:
+                    logger.info(f"   - {sample}")
+        
         return filtered_results
     
     def _semantic_search(self, query: str, top_k: int = 100) -> List[Dict[str, Any]]:
@@ -471,6 +557,37 @@ class HybridSearcher:
         logger.info(f"📋 Semantic search found {len(results)} products")
         return results
     
+    def _enhance_query_for_semantic_search(self, query: str) -> str:
+        """
+        Enhance query with additional keywords for better semantic search results.
+        """
+        query_lower = query.lower()
+        enhanced_query = query
+        
+        # Add mobile phone related keywords if query mentions mobile/phone
+        if any(word in query_lower for word in ['mobile', 'phone', 'smartphone']):
+            if 'children' in query_lower or 'kids' in query_lower or 'child' in query_lower:
+                enhanced_query += " affordable budget cheap redmi xiaomi poco"
+            else:
+                enhanced_query += " smartphone mobile phone"
+        
+        # Add price-related keywords if price constraint is mentioned
+        if any(word in query_lower for word in ['under', 'below', 'less than', 'cheap', 'budget', 'affordable']):
+            enhanced_query += " affordable budget cheap low price"
+        
+        # Add brand keywords for better matching
+        if 'redmi' in query_lower:
+            enhanced_query += " xiaomi redmi"
+        elif 'samsung' in query_lower:
+            enhanced_query += " samsung galaxy"
+        elif 'apple' in query_lower or 'iphone' in query_lower:
+            enhanced_query += " apple iphone"
+        
+        if enhanced_query != query:
+            logger.info(f"🔍 Enhanced query: '{query}' -> '{enhanced_query}'")
+        
+        return enhanced_query
+
     def search(self, query: str, top_k: int = 100, user_context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """
         Main hybrid search function that prioritizes semantic search with optional feature enrichment.
@@ -491,8 +608,10 @@ class HybridSearcher:
         
         # Step A: Extract price constraints first (fast operation)
         price_constraints = self._extract_price_constraints(query)
-        if price_constraints:
-            logger.info(f"💰 Price constraints detected: {price_constraints}")
+    
+        # Step 2: Perform semantic search (get more results if we need to filter)
+        search_k = top_k * 2 if price_constraints else top_k
+        logger.info(f"🔍 Performing semantic search (retrieving {search_k} results for filtering)")
         
         # Step B: Extract entities using spaCy NER (for logging only)
         entities = self.extract_entities(query)
