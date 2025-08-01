@@ -9,470 +9,196 @@ import pickle
 import os
 
 # Import our components
-from trie_autosuggest import TrieAutosuggest
-from semantic_correction import SemanticCorrection
+from enhanced_trie import EnhancedTrieAutosuggest
+from enhanced_semantic_correction import EnhancedSemanticCorrection
 from bert_completion import BERTCompletion
+from reranker_xgboost_v2 import RerankerXGBoostV2
 
 class IntegratedAutosuggest:
-    """Integrated autosuggest system combining all components."""
+    """
+    V2: A fully integrated and enhanced autosuggest system with a powerful reranker.
+    """
     
     def __init__(self):
-        self.trie_autosuggest = TrieAutosuggest()
-        self.semantic_correction = SemanticCorrection()
+        self.trie_autosuggest = EnhancedTrieAutosuggest()
+        self.semantic_correction = EnhancedSemanticCorrection()
         self.bert_completion = BERTCompletion()
-        self.reranker = None
-        self.vectorizer = None
-        self.user_queries = None
-        self.session_log = None
-        
+        self.reranker = RerankerXGBoostV2()
+        self.data = {}
+
     def build_system(self, data: Dict):
         """Build the complete autosuggest system."""
-        print("Building integrated autosuggest system...")
+        print("🚀 Building Integrated Autosuggest System V2...")
+        self.data = data
         
-        self.user_queries = data['user_queries']
-        self.session_log = data['session_log']
-        
-        # Build Trie component
-        print("Building Trie component...")
+        print("-> Building Trie component...")
         self.trie_autosuggest.build_trie(data['user_queries'])
         
-        # Build Semantic Correction component
-        print("Building Semantic Correction component...")
+        print("-> Building Semantic Correction component...")
         self.semantic_correction.build_semantic_index(data['user_queries'])
         
-        # Build BERT Completion component
-        print("Building BERT Completion component...")
+        print("-> Building BERT Completion component...")
         self.bert_completion.build_completion_patterns(data['user_queries'])
         
-        # Build Reranker
-        print("Building XGBoost Reranker...")
-        self._build_reranker(data)
+        print("-> Building Reranker V2 component...")
+        self._build_reranker()
         
-        print("Integrated autosuggest system built successfully!")
+        print("✅ Integrated autosuggest system built successfully!")
     
-    def _build_reranker(self, data: Dict):
-        """Build XGBoost reranker for final ranking."""
-        # Prepare training data for reranker
-        training_data = self._prepare_reranker_data(data)
-        
-        # Initialize XGBoost model
-        self.reranker = xgb.XGBRegressor(
-            objective='reg:squarederror',
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
-            random_state=42
-        )
-        
-        # Train the model
-        X = training_data['features']
-        y = training_data['labels']
-        
-        self.reranker.fit(X, y)
-        
-        # Save the model
-        os.makedirs('../models', exist_ok=True)
-        with open('../models/reranker.pkl', 'wb') as f:
-            pickle.dump(self.reranker, f)
-        
-        print("Reranker trained and saved")
-    
-    def _prepare_reranker_data(self, data: Dict) -> Dict:
-        """Prepare training data for the reranker."""
-        features_list = []
-        labels_list = []
-        
-        # Create TF-IDF vectorizer for text similarity
-        self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
-        
-        # Get all corrected queries for vectorization
-        all_queries = data['user_queries']['corrected_query'].tolist()
-        self.vectorizer.fit(all_queries)
-        
-        # Generate training examples
-        for _, row in data['user_queries'].iterrows():
-            query = row['corrected_query']
-            frequency = row['frequency']
+    def _build_reranker(self):
+        """Prepares data and trains the V2 reranker."""
+        # First, check if a trained model already exists
+        if self.reranker.load_model():
+            return
             
-            # Create positive example
-            features = self._extract_features(query, query, frequency, data)
-            features_list.append(features)
-            labels_list.append(2.0)  # High relevance for exact match
+        print("-> No pre-trained V2 reranker found. Training a new one.")
+        features_df, labels, groups = self._prepare_reranker_data()
+        self.reranker.train_model(features_df, labels, groups)
+
+    def _prepare_reranker_data(self) -> Tuple[pd.DataFrame, pd.Series, list]:
+        """Prepares rich features and labels from session logs for the reranker."""
+        print("-> Preparing data for reranker training...")
+        session_log = self.data['session_log']
+        user_queries = self.data['user_queries']
+        
+        # We need to generate suggestions for each query in the log to create training data
+        all_features = []
+        
+        # Use a smaller subset of sessions for faster training preparation during startup
+        # For a production system, this training should be an offline process.
+        sample_size = min(1000, len(session_log.groupby('session_id')))
+        sampled_sessions = session_log.groupby('session_id').head(1).sample(n=sample_size, random_state=42)
+        
+        for _, session_info in sampled_sessions.iterrows():
+            query = session_info['query']
+            if not isinstance(query, str) or not query.strip():
+                continue
+
+            # Generate candidate suggestions for this historical query
+            trie_suggs = self.trie_autosuggest.get_suggestions(query, 5)
+            semantic_suggs = [s for s, _ in self.semantic_correction.get_semantic_suggestions(query, 2)]
             
-            # Create negative examples (random queries with low frequency)
-            negative_candidates = data['user_queries'][
-                data['user_queries']['frequency'] < frequency
-            ]
-            if len(negative_candidates) > 0:
-                sample_size = min(3, len(negative_candidates))
-                negative_queries = negative_candidates.sample(sample_size)
-            else:
-                # If no negative candidates, use random queries
-                negative_queries = data['user_queries'].sample(min(3, len(data['user_queries'])))
-            
-            for _, neg_row in negative_queries.iterrows():
-                neg_query = neg_row['corrected_query']
-                neg_frequency = neg_row['frequency']
+            candidates = list(set(trie_suggs + semantic_suggs))
+            if not candidates:
+                continue
+
+            # Create features for each candidate
+            for sugg in candidates:
+                features = {'suggestion_text': sugg, 'query_group_id': session_info['session_id']}
                 
-                features = self._extract_features(query, neg_query, neg_frequency, data)
-                features_list.append(features)
-                labels_list.append(0.0)  # Low relevance
+                # Context features
+                context = {
+                    'location': session_info.get('location'),
+                    'event': session_info.get('event'),
+                    'persona': session_info.get('persona_tag'),
+                }
+                features.update(self.reranker._get_contextual_features(sugg, context))
+                
+                # Base scores
+                features['initial_score'] = self.trie_autosuggest._calculate_enhanced_score(sugg, 1, {}, query)
+                features['query_length'] = len(query)
+                features['suggestion_length'] = len(sugg)
+                
+                all_features.append(features)
+
+        if not all_features:
+            raise ValueError("No features were generated for reranker training.")
+
+        features_df = pd.DataFrame(all_features).fillna(0)
         
-        return {
-            'features': np.array(features_list),
-            'labels': np.array(labels_list)
-        }
-    
-    def _extract_features(self, original_query: str, candidate_query: str, 
-                         frequency: int, data: Dict) -> List[float]:
-        """Extract features for reranking."""
-        features = []
+        # Create labels based on interactions
+        # This is a more realistic way to generate labels
+        clicked_df = session_log[session_log['clicked_product_id'].notna()]
+        purchased_df = session_log[session_log['purchased'] == True]
+
+        def get_label(row):
+            if row['suggestion_text'] in purchased_df['query'].values:
+                return 2 # High relevance
+            if row['suggestion_text'] in clicked_df['query'].values:
+                return 1 # Medium relevance
+            return 0 # Low relevance
+
+        features_df['label'] = features_df.apply(get_label, axis=1)
         
-        # 1. Frequency feature
-        features.append(frequency)
+        # Filter out rows with only 0 labels for a query group
+        group_labels = features_df.groupby('query_group_id')['label'].sum()
+        valid_groups = group_labels[group_labels > 0].index
+        features_df = features_df[features_df['query_group_id'].isin(valid_groups)]
+
+        if features_df.empty:
+            raise ValueError("No valid training data left after filtering for non-zero labels.")
+
+        labels = features_df['label']
+        groups = features_df.groupby('query_group_id').size().tolist()
         
-        # 2. Text similarity (TF-IDF)
-        try:
-            query_vec = self.vectorizer.transform([original_query])
-            candidate_vec = self.vectorizer.transform([candidate_query])
-            similarity = cosine_similarity(query_vec, candidate_vec)[0][0]
-            features.append(similarity)
-        except:
-            features.append(0.0)
+        # Drop helper columns
+        features_df = features_df.drop(columns=['label', 'query_group_id'])
         
-        # 3. Length difference
-        features.append(abs(len(original_query) - len(candidate_query)))
-        
-        # 4. Word overlap
-        original_words = set(original_query.lower().split())
-        candidate_words = set(candidate_query.lower().split())
-        overlap = len(original_words.intersection(candidate_words))
-        features.append(overlap)
-        
-        # 5. Category match (if available)
-        category_match = 0.0
-        if 'category' in data['user_queries'].columns:
-            orig_category = data['user_queries'][
-                data['user_queries']['corrected_query'] == original_query
-            ]['category'].iloc[0] if len(data['user_queries'][
-                data['user_queries']['corrected_query'] == original_query
-            ]) > 0 else ''
-            
-            cand_category = data['user_queries'][
-                data['user_queries']['corrected_query'] == candidate_query
-            ]['category'].iloc[0] if len(data['user_queries'][
-                data['user_queries']['corrected_query'] == candidate_query
-            ]) > 0 else ''
-            
-            category_match = 1.0 if orig_category == cand_category else 0.0
-        features.append(category_match)
-        
-        # 6. Event relevance (if available)
-        event_relevance = 0.0
-        if 'event' in data['user_queries'].columns:
-            orig_event = data['user_queries'][
-                data['user_queries']['corrected_query'] == original_query
-            ]['event'].iloc[0] if len(data['user_queries'][
-                data['user_queries']['corrected_query'] == original_query
-            ]) > 0 else ''
-            
-            cand_event = data['user_queries'][
-                data['user_queries']['corrected_query'] == candidate_query
-            ]['event'].iloc[0] if len(data['user_queries'][
-                data['user_queries']['corrected_query'] == candidate_query
-            ]) > 0 else ''
-            
-            event_relevance = 1.0 if orig_event == cand_event else 0.0
-        features.append(event_relevance)
-        
-        return features
-    
-    def get_suggestions(self, query: str, max_suggestions: int = 10, 
-                       context: Dict = None) -> List[Tuple[str, float]]:
-        """Get integrated autosuggestions."""
+        print(f"-> Prepared {len(features_df)} samples for reranker training across {len(groups)} query groups.")
+        return features_df, labels, groups
+
+    def get_contextual_suggestions(self, query: str, context: Dict) -> List[Tuple[str, float]]:
+        """The main entry point for getting high-quality, context-aware suggestions."""
         if not query.strip():
             return []
         
         query = query.lower().strip()
         
-        # Step 1: Get Trie suggestions
-        trie_suggestions = self.trie_autosuggest.get_suggestions_with_scores(query)
+        # Step 1: Candidate Generation
+        trie_suggs = self.trie_autosuggest.get_suggestions_with_scores(query, max_suggestions=7)
+        semantic_suggs = self.semantic_correction.get_semantic_suggestions(query, 3)
+        bert_suggs = self.bert_completion.complete_query(query, 2)
         
-        # Step 2: Get Semantic Correction suggestions
-        semantic_suggestions = self.semantic_correction.get_semantic_suggestions(query)
-        
-        # Step 3: Get BERT Completion suggestions
-        bert_suggestions = self.bert_completion.complete_query(query)
-        
-        # Step 4: Combine all suggestions
-        all_suggestions = []
-        
-        # Add Trie suggestions
-        for suggestion, frequency in trie_suggestions:
-            all_suggestions.append((suggestion, 'trie', frequency))
-        
-        # Add Semantic suggestions
-        for suggestion, similarity in semantic_suggestions:
-            all_suggestions.append((suggestion, 'semantic', similarity))
-        
-        # Add BERT suggestions
-        for suggestion in bert_suggestions:
-            all_suggestions.append((suggestion, 'bert', 0.5))  # Default score
-        
-        # Step 5: Remove duplicates and rerank
-        unique_suggestions = {}
-        for suggestion, source, score in all_suggestions:
-            if suggestion not in unique_suggestions:
-                unique_suggestions[suggestion] = {'source': source, 'score': score}
-            else:
-                # Keep the higher score
-                unique_suggestions[suggestion]['score'] = max(
-                    unique_suggestions[suggestion]['score'], score
-                )
-        
-        # Step 6: Rerank using XGBoost
-        reranked_suggestions = []
-        for suggestion, info in unique_suggestions.items():
-            # Extract features for reranking
-            features = self._extract_features(query, suggestion, info['score'], {
-                'user_queries': self.user_queries
-            })
+        # Combine and deduplicate
+        all_suggestions = {}
+        for s, score in trie_suggs:
+            all_suggestions[s] = max(all_suggestions.get(s, 0), score)
+        for s, score in semantic_suggs:
+            all_suggestions[s] = max(all_suggestions.get(s, 0), score)
+        for s in bert_suggs:
+            all_suggestions[s] = max(all_suggestions.get(s, 0), 0.5) # Assign a default score for BERT suggestions
             
-            # Get reranker score
-            reranker_score = self.reranker.predict([features])[0]
+        candidate_suggestions = list(all_suggestions.items())
+        
+        if not candidate_suggestions:
+            return []
             
-            reranked_suggestions.append((suggestion, reranker_score))
+        # Step 2: Reranking
+        reranked_suggestions = self.reranker.rerank(query, candidate_suggestions, context)
         
-        # Sort by reranker score
-        reranked_suggestions.sort(key=lambda x: x[1], reverse=True)
-        
-        return reranked_suggestions[:max_suggestions]
-    
-    def get_contextual_suggestions(self, query: str, session_context: Dict = None,
-                                 location: str = None, event: str = None) -> List[Tuple[str, float]]:
-        """Get contextual autosuggestions with session, location, and event awareness."""
-        base_suggestions = self.get_suggestions(query)
-        
-        if not session_context and not location and not event:
-            return base_suggestions
-        
-        # Apply contextual boosts
-        contextual_suggestions = []
-        
-        for suggestion, score in base_suggestions:
-            boosted_score = score
-            
-            # Location-based boost
-            if location:
-                location_boost = self._get_location_boost(suggestion, location)
-                boosted_score += location_boost
-            
-            # Event-based boost
-            if event:
-                event_boost = self._get_event_boost(suggestion, event)
-                boosted_score += event_boost
-            
-            # Session-based boost
-            if session_context:
-                session_boost = self._get_session_boost(suggestion, session_context)
-                boosted_score += session_boost
-            
-            contextual_suggestions.append((suggestion, boosted_score))
-        
-        # Re-sort by boosted scores
-        contextual_suggestions.sort(key=lambda x: x[1], reverse=True)
-        
-        return contextual_suggestions
-    
-    def _get_location_boost(self, suggestion: str, location: str) -> float:
-        """Get location-based boost for suggestions."""
-        # Simple location-based boosting
-        location_keywords = {
-            'mumbai': ['fast delivery', 'same day'],
-            'delhi': ['express delivery', 'quick'],
-            'bangalore': ['tech', 'gaming', 'laptop'],
-            'chennai': ['traditional', 'formal'],
-            'kolkata': ['budget', 'affordable'],
-            'hyderabad': ['tech', 'mobile'],
-            'pune': ['student', 'budget'],
-            'ahmedabad': ['business', 'formal'],
-            'jaipur': ['traditional', 'ethnic'],
-            'lucknow': ['traditional', 'cultural']
-        }
-        
-        location = location.lower()
-        if location in location_keywords:
-            for keyword in location_keywords[location]:
-                if keyword in suggestion.lower():
-                    return 0.1
-        
-        return 0.0
-    
-    def _get_event_boost(self, suggestion: str, event: str) -> float:
-        """Get event-based boost for suggestions."""
-        # Event-based boosting
-        event_keywords = {
-            'diwali': ['lights', 'decor', 'gifts', 'sweets', 'traditional'],
-            'holi': ['colors', 'water', 'party', 'celebration'],
-            'christmas': ['gifts', 'decor', 'winter', 'sweater'],
-            'eid': ['traditional', 'clothes', 'gifts'],
-            'rakhi': ['gifts', 'sweets', 'traditional'],
-            'navratri': ['traditional', 'dress', 'garba'],
-            'ganesh_chaturthi': ['traditional', 'decor', 'sweets'],
-            'ipl': ['jersey', 'sports', 'cricket', 'team'],
-            'wedding': ['formal', 'traditional', 'gifts', 'jewelry'],
-            'birthday': ['gifts', 'party', 'celebration']
-        }
-        
-        event = event.lower()
-        if event in event_keywords:
-            for keyword in event_keywords[event]:
-                if keyword in suggestion.lower():
-                    return 0.2
-        
-        return 0.0
-    
-    def _get_session_boost(self, suggestion: str, session_context: Dict) -> float:
-        """Get session-based boost for suggestions."""
-        boost = 0.0
-        
-        # Check if suggestion matches previous queries in session
-        if 'previous_queries' in session_context:
-            for prev_query in session_context['previous_queries']:
-                if any(word in suggestion.lower() for word in prev_query.lower().split()):
-                    boost += 0.05
-        
-        # Check if suggestion matches clicked categories
-        if 'clicked_categories' in session_context:
-            for category in session_context['clicked_categories']:
-                if category.lower() in suggestion.lower():
-                    boost += 0.1
-        
-        # Check if suggestion matches clicked brands
-        if 'clicked_brands' in session_context:
-            for brand in session_context['clicked_brands']:
-                if brand.lower() in suggestion.lower():
-                    boost += 0.15
-        
-        return boost
+        return reranked_suggestions[:5]
 
-# Test the integrated autosuggest system
+# Kept for backward compatibility if any old script calls it, but the main flow is contextual
+    def get_suggestions(self, query: str, max_suggestions: int = 5) -> List[Tuple[str, float]]:
+        return self.get_contextual_suggestions(query, context={})
+
 if __name__ == "__main__":
-    # Load and preprocess data
-    from data_preprocessing import DataPreprocessor
-    
     preprocessor = DataPreprocessor()
     preprocessor.run_all_preprocessing()
     data = preprocessor.get_processed_data()
     
-    # Initialize integrated autosuggest
     autosuggest = IntegratedAutosuggest()
-    
-    # Build the system
     autosuggest.build_system(data)
     
-    # Test cases
-    test_queries = [
-        "sam",           # Should suggest "samsung"
-        "app",           # Should suggest "apple"
-        "nik",           # Should suggest "nike"
-        "smart",         # Should suggest "smartphone", "smartwatch"
-        "lap",           # Should suggest "laptop"
-        "head",          # Should suggest "headphones"
-        "sho",           # Should suggest "shoes"
-        "tv",            # Should suggest "tv"
-        "phone",         # Should suggest "mobile phone"
-        "ear",           # Should suggest "earbuds"
-        "key",           # Should suggest "keyboard"
-        "char",          # Should suggest "charger"
-        "watch",         # Should suggest "watch", "smartwatch"
-        "tab",           # Should suggest "tablet"
-        "cam",           # Should suggest "camera"
-        "speak",         # Should suggest "speaker"
-        "mous",          # Should suggest "mouse"
-        "case",          # Should suggest "case"
-        "bag",           # Should suggest "bag"
-        "wallet",        # Should suggest "wallet"
-        "hood",          # Should suggest "hoodie"
-        "jean",          # Should suggest "jeans"
-        "shirt",         # Should suggest "shirt", "t shirt"
-        "sneak",         # Should suggest "sneakers"
-        "notebook",      # Should suggest "notebook"
-        "televis",       # Should suggest "television"
-        "mobil",         # Should suggest "mobile phone"
-        "smartphon",     # Should suggest "smartphone"
-        "headphon",      # Should suggest "headphones"
-        "earbud",        # Should suggest "earbuds"
-        "televisn",      # Should suggest "television"
-        "sneakr",        # Should suggest "sneakers"
-        "smartwach",     # Should suggest "smartwatch"
-        "tablit",        # Should suggest "tablet"
-        "camra",         # Should suggest "camera"
-        "speakr",        # Should suggest "speaker"
-        "keybord",       # Should suggest "keyboard"
-        "chargr",        # Should suggest "charger"
-        "hoodi",         # Should suggest "hoodie"
-        "jens",          # Should suggest "jeans"
-        "notbook",       # Should suggest "notebook"
-        "shoos",         # Should suggest "shoes"
-        "wach",          # Should suggest "watch"
-        "shrt",          # Should suggest "shirt"
-        "walet",         # Should suggest "wallet"
-        "mous",          # Should suggest "mouse"
-        "cas",           # Should suggest "case"
-        "bg",            # Should suggest "bag"
+    print("\n\n=== V2 Integration Test ===")
+    
+    test_query = "jersy"
+    contexts = [
+        {
+            'persona': 'sports_enthusiast', 'location': 'Chennai', 'event': 'IPL', 
+            'description': 'Sports fan in Chennai during IPL'
+        },
+        {
+            'persona': 'fashion_lover', 'location': 'Mumbai', 'event': 'None',
+            'description': 'Fashion lover in Mumbai'
+        }
     ]
-    
-    print("\n=== Integrated Autosuggest Test Results ===")
-    
-    for query in test_queries:
-        start_time = time.time()
-        suggestions = autosuggest.get_suggestions(query)
-        end_time = time.time()
-        
-        print(f"\nQuery: '{query}'")
-        print(f"Suggestions: {suggestions[:5]}")
-        print(f"Response time: {(end_time - start_time)*1000:.2f}ms")
-    
-    # Test contextual suggestions
-    print(f"\n=== Contextual Suggestions Test ===")
-    
-    # Test with location context
-    location_context = "Mumbai"
-    test_query = "lights"
-    suggestions = autosuggest.get_contextual_suggestions(
-        test_query, 
-        location=location_context,
-        event="diwali"
-    )
-    
-    print(f"\nQuery: '{test_query}' with location: {location_context}, event: diwali")
-    print(f"Contextual suggestions: {suggestions[:5]}")
-    
-    # Test with session context
-    session_context = {
-        'previous_queries': ['samsung', 'mobile'],
-        'clicked_categories': ['Electronics'],
-        'clicked_brands': ['Samsung']
-    }
-    
-    test_query = "phone"
-    suggestions = autosuggest.get_contextual_suggestions(
-        test_query,
-        session_context=session_context
-    )
-    
-    print(f"\nQuery: '{test_query}' with session context")
-    print(f"Session-aware suggestions: {suggestions[:5]}")
-    
-    # Test performance
-    print(f"\n=== Performance Test ===")
-    test_query = "smart"
-    start_time = time.time()
-    for _ in range(100):
-        autosuggest.get_suggestions(test_query)
-    end_time = time.time()
-    
-    avg_time = (end_time - start_time) / 100 * 1000
-    print(f"Average response time for '{test_query}': {avg_time:.2f}ms")
-    print(f"QPS: {100 / (end_time - start_time):.0f}") 
+
+    for context in contexts:
+        print(f"\n--- Testing with context: {context['description']} ---")
+        suggestions = autosuggest.get_contextual_suggestions(test_query, context)
+        print(f"Query: '{test_query}' -> Suggestions: {[s for s, score in suggestions]}")
+
+    print("\n--- Testing typo correction ---")
+    suggestions = autosuggest.get_contextual_suggestions("leptop", context={'persona': 'tech_enthusiast'})
+    print(f"Query: 'leptop' -> Suggestions: {[s for s, score in suggestions]}")

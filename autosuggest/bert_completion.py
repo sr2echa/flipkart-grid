@@ -227,10 +227,18 @@ class BERTCompletion:
                 
                 # Decode top tokens
                 for token_id in top_tokens:
-                    token = self.tokenizer.decode([token_id])
-                    completion = prefix + " " + token.strip()
-                    if len(completion.split()) <= 4:  # Limit completion length
-                        completions.append(completion)
+                    token = self.tokenizer.decode([token_id]).strip()
+                    # Filter out subword tokens, special tokens, and low-quality tokens
+                    if (not token.startswith("##") and 
+                        not token in ["[UNK]", "[PAD]", "[CLS]", "[SEP]", "[MASK]"] and
+                        len(token) > 1 and 
+                        token.isalpha() and
+                        not token.startswith("!") and
+                        not token.startswith(".") and
+                        not token.startswith(";")):
+                        completion = prefix + " " + token
+                        if len(completion.split()) <= 4:  # Limit completion length
+                            completions.append(completion)
         
         except Exception as e:
             print(f"BERT completion error: {e}")

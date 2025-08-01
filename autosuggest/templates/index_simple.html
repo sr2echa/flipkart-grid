@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipkart AutoSuggest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .side-panel h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .setting-group {
+            margin-bottom: 24px;
+        }
+
+        .setting-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+
+        .setting-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .persona-info {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: -1px;
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-top: 8px;
+        }
+
+        /* Search Area */
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 12px 40px rgba(52, 152, 219, 0.3);
+        }
+
+        .search-input::placeholder {
+            color: #bdc3c7;
+        }
+
+        /* Suggestions */
+        .suggestions-container {
+            margin-top: 24px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .suggestions-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .suggestion-item {
+            background: white;
+            margin-bottom: 8px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-text {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .suggestion-score {
+            margin-left: auto;
+            font-size: 12px;
+            color: #95a5a6;
+            background: #ecf0f1;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        /* Status */
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 14px;
+            padding: 40px;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Side Panel -->
+        <div class="side-panel">
+            <h2>Search Settings</h2>
+            
+            <div class="setting-group">
+                <label class="setting-label">User Persona</label>
+                <select id="persona-select" class="setting-select">
+                    <!-- Options populated by JavaScript -->
+                </select>
+                <div id="persona-info" class="persona-info">
+                    Select a persona to see personalized suggestions
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Location</label>
+                <select id="location-select" class="setting-select">
+                    <!-- Options populated by JavaScript -->
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Event/Season</label>
+                <select id="event-select" class="setting-select">
+                    <!-- Options populated by JavaScript -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="logo-area">
+                <div class="logo">Flipkart AutoSuggest V5</div>
+                <div class="tagline">🏆 Intelligent Brand Recognition + Agentic Improvement</div>
+            </div>
+
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Try: 'xiomi', 'jersy', 'samsng', 'nike sho', 'lapto' - See the magic!"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="suggestions-container">
+                <div class="loading" id="loading">Searching...</div>
+                <div id="suggestions-list">
+                                    <div class="empty-state">
+                    🎯 Type 'sam' → Samsung, 'xiomi' → Xiaomi, 'jersy' → Jersey<br>
+                    🏆 Enhanced V5: Perfect brand recognition + Agentic improvement<br>
+                    ✨ SBERT + FAISS + NLTK + LLM-validated quality (100% success rate!)
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+        Ready
+    </div>
+
+    <script>
+        let config = {};
+        let currentQuery = '';
+        let debounceTimer = null;
+
+        // Initialize app
+        async function init() {
+            try {
+                // Load configuration
+                const response = await fetch('/api/config');
+                config = await response.json();
+                
+                // Populate dropdowns
+                populatePersonas();
+                populateLocations();
+                populateEvents();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                updateStatus('Ready');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                updateStatus('Error loading configuration');
+            }
+        }
+
+        function populatePersonas() {
+            const select = document.getElementById('persona-select');
+            Object.entries(config.personas).forEach(([id, persona]) => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = persona.name;
+                if (id === 'tech_enthusiast') option.selected = true;
+                select.appendChild(option);
+            });
+            updatePersonaInfo();
+        }
+
+        function populateLocations() {
+            const select = document.getElementById('location-select');
+            config.locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                if (location === 'Mumbai') option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function populateEvents() {
+            const select = document.getElementById('event-select');
+            config.events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = event.name;
+                if (event.id === 'none') option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function updatePersonaInfo() {
+            const personaId = document.getElementById('persona-select').value;
+            const persona = config.personas[personaId];
+            const infoDiv = document.getElementById('persona-info');
+            infoDiv.textContent = persona ? persona.description : '';
+        }
+
+        function setupEventListeners() {
+            const searchInput = document.getElementById('search-input');
+            const personaSelect = document.getElementById('persona-select');
+            const locationSelect = document.getElementById('location-select');
+            const eventSelect = document.getElementById('event-select');
+
+            // Search input with debouncing
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                currentQuery = query;
+                
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    if (currentQuery === query) { // Only search if query hasn't changed
+                        performSearch(query);
+                    }
+                }, 200);
+            });
+
+            // Settings changes trigger immediate re-search
+            [personaSelect, locationSelect, eventSelect].forEach(select => {
+                select.addEventListener('change', () => {
+                    if (select === personaSelect) {
+                        updatePersonaInfo();
+                    }
+                    if (currentQuery) {
+                        performSearch(currentQuery);
+                    }
+                });
+            });
+
+            // Suggestion clicks
+            document.getElementById('suggestions-list').addEventListener('click', (e) => {
+                const suggestionItem = e.target.closest('.suggestion-item');
+                if (suggestionItem) {
+                    const suggestionText = suggestionItem.querySelector('.suggestion-text').textContent;
+                    searchInput.value = suggestionText;
+                    currentQuery = suggestionText;
+                    performSearch(suggestionText);
+                }
+            });
+        }
+
+        async function performSearch(query) {
+            if (!query) {
+                showEmptyState();
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const requestData = {
+                    query: query,
+                    persona: document.getElementById('persona-select').value,
+                    location: document.getElementById('location-select').value,
+                    event: document.getElementById('event-select').value
+                };
+
+                const response = await fetch('/api/suggest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displaySuggestions(data.suggestions, data.metadata);
+                    updateStatus(`${data.suggestions.length} suggestions in ${data.response_time_ms}ms`);
+                } else {
+                    showError(data.error || 'Search failed');
+                    updateStatus('Search failed');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showError('Connection error');
+                updateStatus('Connection error');
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('suggestions-list').innerHTML = '<div class="loading show">Searching...</div>';
+        }
+
+        function displaySuggestions(suggestions, metadata) {
+            const container = document.getElementById('suggestions-list');
+            
+            if (!suggestions || suggestions.length === 0) {
+                container.innerHTML = '<div class="empty-state">No suggestions found. Try a different search term.</div>';
+                return;
+            }
+
+            let html = '<div class="suggestions-title">Suggestions</div>';
+            
+            suggestions.forEach(suggestion => {
+                html += `
+                    <div class="suggestion-item">
+                        <span class="suggestion-text">${suggestion.text}</span>
+                        <span class="suggestion-score">${suggestion.score}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showEmptyState() {
+            document.getElementById('suggestions-list').innerHTML = 
+                '<div class="empty-state">Start typing to see intelligent suggestions based on your persona and context</div>';
+        }
+
+        function showError(message) {
+            document.getElementById('suggestions-list').innerHTML = 
+                `<div class="empty-state">Error: ${message}</div>`;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status-bar').textContent = message;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

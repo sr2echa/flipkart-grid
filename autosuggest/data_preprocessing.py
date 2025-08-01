@@ -25,17 +25,29 @@ class DataPreprocessor:
         self.product_catalog = pd.read_csv('../dataset/product_catalog.csv')
         print(f"Product catalog loaded: {len(self.product_catalog)} products")
         
-        # Load user queries
-        self.user_queries = pd.read_csv('../dataset/user_queries.csv')
-        print(f"User queries loaded: {len(self.user_queries)} queries")
+        # Load user queries (try comprehensive version first)
+        try:
+            self.user_queries = pd.read_csv('../dataset/user_queries_comprehensive.csv')
+            print(f"Comprehensive user queries loaded: {len(self.user_queries)} queries")
+        except FileNotFoundError:
+            try:
+                self.user_queries = pd.read_csv('../dataset/user_queries_enhanced_v2.csv')
+                print(f"Enhanced V2 user queries loaded: {len(self.user_queries)} queries")
+            except FileNotFoundError:
+                self.user_queries = pd.read_csv('../dataset/user_queries.csv')
+                print(f"Original user queries loaded: {len(self.user_queries)} queries")
         
         # Load realtime product info
         self.realtime_product_info = pd.read_csv('../dataset/realtime_product_info.csv')
         print(f"Realtime product info loaded: {len(self.realtime_product_info)} records")
         
-        # Load session log
-        self.session_log = pd.read_csv('../dataset/session_log.csv')
-        print(f"Session log loaded: {len(self.session_log)} sessions")
+        # Load session log (try enhanced version first)
+        try:
+            self.session_log = pd.read_csv('../dataset/session_log_enhanced_v2.csv')
+            print(f"Enhanced V2 session log loaded: {len(self.session_log)} sessions")
+        except FileNotFoundError:
+            self.session_log = pd.read_csv('../dataset/session_log.csv')
+            print(f"Original session log loaded: {len(self.session_log)} sessions")
         
         # Load NER dataset
         self.ner_dataset = pd.read_csv('../dataset/ner_dataset.csv')
@@ -74,16 +86,6 @@ class DataPreprocessor:
         """Process user queries data."""
         print("Processing user queries...")
         
-        # Clean corrected_query
-        self.user_queries['corrected_query'] = (
-            self.user_queries['corrected_query']
-            .str.lower()
-            .str.strip()
-        )
-        
-        # Ensure frequency is numeric
-        self.user_queries['frequency'] = pd.to_numeric(self.user_queries['frequency'], errors='coerce')
-        
         # Clean raw_query
         self.user_queries['raw_query'] = (
             self.user_queries['raw_query']
@@ -91,8 +93,32 @@ class DataPreprocessor:
             .str.strip()
         )
         
+        # Create corrected_query from raw_query (initially same, can be enhanced later)
+        if 'corrected_query' not in self.user_queries.columns:
+            self.user_queries['corrected_query'] = self.user_queries['raw_query'].copy()
+        
+        # Clean corrected_query
+        self.user_queries['corrected_query'] = (
+            self.user_queries['corrected_query']
+            .str.lower()
+            .str.strip()
+        )
+        
+        # Create frequency column based on query occurrence
+        if 'frequency' not in self.user_queries.columns:
+            query_counts = self.user_queries['corrected_query'].value_counts()
+            self.user_queries['frequency'] = self.user_queries['corrected_query'].map(query_counts)
+        
+        # Ensure frequency is numeric
+        self.user_queries['frequency'] = pd.to_numeric(self.user_queries['frequency'], errors='coerce')
+        
         # Add predicted_purchase column (placeholder for now)
         self.user_queries['predicted_purchase'] = 0.0
+        
+        # Extract location data from location_data column
+        if 'location' not in self.user_queries.columns and 'location_data' in self.user_queries.columns:
+            # Extract just the city name from location_data like "New York, USA"
+            self.user_queries['location'] = self.user_queries['location_data'].str.split(',').str[0]
         
         print(f"Processed {len(self.user_queries)} user queries")
         return self.user_queries
@@ -141,8 +167,8 @@ class DataPreprocessor:
         """Process session log data."""
         print("Processing session log...")
         
-        # Parse timestamp
-        self.session_log['timestamp'] = pd.to_datetime(self.session_log['timestamp'])
+        # Parse timestamp with error handling for mixed formats
+        self.session_log['timestamp'] = pd.to_datetime(self.session_log['timestamp'], errors='coerce', format='mixed')
         
         # Sort by session_id and timestamp
         self.session_log = self.session_log.sort_values(['session_id', 'timestamp'])

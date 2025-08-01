@@ -1,11 +1,37 @@
-pandas
-numpy
-scikit-learn
-xgboost
-sentence-transformers
-faiss-cpu
-transformers
-torch
-matplotlib
-seaborn
-tqdm 
+# Grid 7.0 - Requirements File (FIXED VERSION COMPATIBILITY)
+# ================================================================
+
+sentence-transformers==2.7.0
+huggingface-hub>=0.16.0
+transformers>=4.30.0
+torch>=2.0.0,<2.2.0
+tokenizers>=0.15.0,<0.16.0
+accelerate>=0.20.0
+spacy
+
+
+faiss-cpu==1.7.4
+numpy>=1.24.0,<1.26.0
+pandas>=2.0.0,<2.1.0
+scikit-learn>=1.3.0,<1.4.0
+scipy>=1.11.0,<1.12.0
+lightgbm
+
+fastapi==0.104.1
+pydantic>=2.5.0,<3.0.0
+uvicorn[standard]==0.24.0
+
+tqdm>=4.65.0
+requests>=2.31.0
+
+# Optional: For GPU acceleration (uncomment if you have CUDA)
+# faiss-gpu==1.7.4
+
+# Development Tools (optional)
+# jupyter>=1.0.0
+# matplotlib>=3.7.0
+# seaborn>=0.12.0
+
+# Production Deployment (optional)
+# gunicorn>=21.2.0
+# redis>=4.6.0

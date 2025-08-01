@@ -1,0 +1,9 @@
+# Dependencies for integrated autosuggest + search frontend
+Flask>=2.3.0
+Flask-CORS>=4.0.0
+pandas>=1.5.0
+
+# Search system dependencies
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+numpy>=1.24.0
