@@ -1,15 +1,12 @@
 {
-  "total_products": 25000,
+  "original_products": 20000,
+  "final_products": 20000,
+  "unique_categories": 265,
+  "unique_brands": 4,
   "embedding_dimension": 384,
+  "embedding_generation_time": 2079.6940467357635,
+  "failed_products": 0,
+  "faiss_build_time": 0.04805493354797363,
   "model_name": "all-MiniLM-L6-v2",
-  "index_type": "FlatIP",
-  "build_timestamp": "2025-07-30T13:23:11.653252",
-  "source_catalogs": [
-    "catalog_1",
-    "catalog_2"
-  ],
-  "catalog_sizes": {
-    "catalog_1": 20000,
-    "catalog_2": 5000
-  }
+  "build_timestamp": 1754068386.2276266
 }
