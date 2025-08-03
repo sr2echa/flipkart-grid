@@ -1,11 +1,84 @@
-# Flipkart Autosuggest System 
+<samp>
+<img width="1920" height="550" alt="image" src="https://github.com/user-attachments/assets/4b7e03e3-35d6-4a91-95d8-d5b4634612a6" />
 
-A comprehensive, production-ready autosuggest system for e-commerce search, built with advanced AI/ML techniques.
+A comprehensive, production-ready autosuggest and search result page system for e-commerce product search & listing, built with advanced AI/ML techniques to convert clicks to purchases and reduce user contemplations.
+
+<img width="1920" height="158" alt="image" src="https://github.com/user-attachments/assets/32e7b3c1-9c06-4a1f-8bcb-1046b0cda78f" />
+<br><br>
+
+|  | Autosuggest Limitations | Search Results Page Issues | Business Impact |
+| :--- | :--- | :--- | :--- |
+| **Data Structure & Algorithms** | Relies on popularity-based Trie structures; lacks context awareness. Poor handling of typos and semantic variations. | Heavy dependence on inverted index systems that miss semantic relationships. Static ranking algorithms that don't adapt to user context or session behavior. | Higher bounce rates, increased user effort, and missed conversion opportunities. |
+| **Personalization & Context** | Lacks real-time personalization and event-based contextual suggestions. Limited understanding of user intent beyond basic prefix matching. | Poor performance on long-tail queries where exact keyword matches are rare. Lack of real-time feature integration for dynamic product attributes. | Missed conversion opportunities. |
+| **Localization** | |  | Especially problematic for India's diverse linguistic patterns and shopping behaviors. |
+
+<img width="1920" height="158" alt="image" src="https://github.com/user-attachments/assets/2fb627c4-5458-424a-a4ca-f54d08e0c8cf" />
+<br><br>
+
+**Core Challenge**
+Design and build next-generation Autosuggest and Search Results Page systems that ensure "every commerce search in India begins with Flipkart."
+
+**Success Metrics**
+* Improved query suggestion accuracy
+* Reduced search abandonment
+* Higher click-through rates
+* Enhanced user satisfaction across diverse Indian market segments
+
+**Key Objectives**
+* **Intelligent Autosuggest:** Reduce typing effort through semantic understanding, typo correction, and context-aware suggestions.
+* **Precision Retrieval:** Enable semantic product discovery that works beyond exact keyword matches.
+* **Context-Aware Ranking:** Deliver personalized results considering user session, location, events, and real-time factors.
+* **Seamless Experience:** Minimize user effort while maximizing discovery and conversion potential.
+
+<img width="1920" height="158" alt="image" src="https://github.com/user-attachments/assets/cebb1d98-004c-40c6-911a-861727aa6cb0" />
+
+
+Our system leverages carefully designed datasets that capture every aspect of the search journey.
+
+| Data Type | Description |
+| :--- | :--- |
+| **Core Product Intelligence** | Rich product repository with 10+ major categories, detailed specifications, and comprehensive metadata enabling semantic understanding and multi-faceted filtering. |
+| **User Behavior Analytics** | Captures raw user intentions, query patterns, and session interactions across different locations and events, providing a foundation for personalization and intent understanding. |
+| **Real-time Context** | Dynamic product attributes including location-specific delivery, pricing, stock status, and offers, enabling contextually relevant search results. |
+| **Named Entity Recognition Training** | Structured query annotation data enabling extraction of brands, categories, price ranges, and contextual attributes from natural language queries. |
+| **Persona Intelligence** | Advanced user profiling dataset combining behavioral patterns, price preferences, brand affinity, and session characteristics for sophisticated personalization. |
 
 ## 🎯 Overview
 
-This system implements a state-of-the-art autosuggest solution that combines multiple AI/ML components to provide intelligent, contextual search suggestions for Flipkart's e-commerce platform.
-
+```mermaid
+graph TB
+    subgraph "Autosuggest Pipeline"
+        A1[User Input] --> A2[Trie Match]
+        A1 --> A3[SBERT Correction]
+        A1 --> A4[BERT Completion]
+        A2 --> A5[XGBoost Reranker]
+        A3 --> A5
+        A4 --> A5
+    end
+    
+    subgraph "SRP Pipeline"
+        B1[Query] --> B2[NER Parser]
+        B2 --> B3[SBERT Retrieval]
+        B3 --> B4[LightGBM Ranking]
+        B5[Real-time Features] --> B4
+        B6[Context Engine] --> B4
+    end
+    
+    subgraph "Data Layer"
+        C1[Product Catalog]
+        C2[User Queries]
+        C3[Session Logs]
+        C4[NER Dataset]
+        C5[Persona Training]
+    end
+    
+    A5 --> B1
+    C1 --> B3
+    C2 --> A2
+    C3 --> B6
+    C4 --> B2
+    C5 --> B6
+```
 ## 🏗️ Architecture
 
 ### Project Structure
@@ -350,18 +423,7 @@ CMD ["python", "autosuggest_service.py"]
 - [FAISS Documentation](https://github.com/facebookresearch/faiss)
 - [XGBoost Documentation](https://xgboost.readthedocs.io/)
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ---
 
 **Built with ❤️ for Flipkart's e-commerce search experience** 
+</samp>
